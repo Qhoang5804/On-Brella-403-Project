@@ -18,4 +18,5 @@ widely available stations via a mobile web application.
 * Kyle Sherman
 * Angelo Villacrez
 * Abel Mitiku
-* 
+* Biniyam Gebreyohannes
+* Daniel Alemayehu

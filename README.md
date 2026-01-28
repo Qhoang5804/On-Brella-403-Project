@@ -5,8 +5,8 @@ Your on the go umbrella service
 ## Layout
 
 * Description
-* Authors
 * Toolset
+* Authors
 
 ## Description
 

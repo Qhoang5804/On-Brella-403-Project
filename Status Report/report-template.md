@@ -9,6 +9,7 @@
 ## 1. High Level Goal:
 <!-- Describe in one line the overarching goal of your next release, which may take multiple weeks to achieve. Example: Develop frontend to backend working software for the Beta Release, showcasing feature X. This serves to keep everyone aligned with the overall vision to which you're working. -->
 
+
 ---
 
 ## Original Goals for The Week:
@@ -18,7 +19,8 @@
 
 ## Progress and Issues:
 <!-- Report on progress and issues: what you did, what worked, what you learned, where you had trouble, and where you are blocked. -->
-
+We've completed the 2nd milestone assignment where we set up our Github Repository, developed a project description plan, outlined requirements,
+and explored the technical aspects of the project. We are still brainstorming how we will incorporate the hardware element, which is something we will likely talk more in depth about in our Thursday meeting.
 ---
 
 ## Questions for the Product Owner:

@@ -9,6 +9,7 @@
 ## 1. High Level Goal:
 <!-- Describe in one line the overarching goal of your next release, which may take multiple weeks to achieve. Example: Develop frontend to backend working software for the Beta Release, showcasing feature X. This serves to keep everyone aligned with the overall vision to which you're working. -->
 
+Complete system architecture and design while setting up the initial frontend, backend, and hardware simulation groundwork in preparation for the Beta release.
 
 ---
 
@@ -26,7 +27,15 @@ and explored the technical aspects of the project. We are still brainstorming ho
 ## Questions for the Product Owner:
 <!-- List any questions for your TA to be discussed in your Thursday project meeting. -->
 Are we required to have a fully working hardware component for our project deliverables?
+Is a hardware simulator sufficient for meeting the hardware integration requirement?
+Are there specific expectations for how realistic the station prototype must be?
+Is it acceptable to limit early testing to a single station setup?
 ---
 
 ## Goals for Next Week:
 <!-- Outline your plans and goals for the following week. Each bullet point should include a measurable task and a time estimate (no longer than a week). We recommend that you label these with the student(s) who is responsible for the item.  -->
+
+Design system architecture and data models
+Create initial frontend wireframes and UI flow
+Research hardware communication and simulation options
+Set up CI pipeline and deployment skeleton

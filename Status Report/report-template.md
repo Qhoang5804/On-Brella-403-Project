@@ -25,7 +25,7 @@ and explored the technical aspects of the project. We are still brainstorming ho
 
 ## Questions for the Product Owner:
 <!-- List any questions for your TA to be discussed in your Thursday project meeting. -->
-
+Are we required to have a fully working hardware component for our project deliverables?
 ---
 
 ## Goals for Next Week:

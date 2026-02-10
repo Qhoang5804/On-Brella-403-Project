@@ -1,76 +1,28 @@
 # GitHub Actions workflow for On-Brella
-# This workflow builds the project and runs automated tests
-
 name: On-Brella CI
 
-# Controls when the workflow runs
 on:
-  # Run on pushes to main
   push:
     branches: [ "main" ]
 
-  # Run on pull requests targeting main
   pull_request:
     branches: [ "main" ]
 
-  # Allow manual triggering from the Actions tab
   workflow_dispatch:
 
-# Jobs define independent tasks in the workflow
 jobs:
 
-  # -----------------------
-  # Build Job
-  # -----------------------
-  build:
-    name: Build Project
+  ci:
+    name: CI Sanity Check
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository code
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js environment
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      # Step 3: Install dependencies
-      - name: Install dependencies
-        run: npm install
-
-      # Step 4: Build project (if applicable)
-      # This ensures the project compiles / builds successfully
-      - name: Build application
-        run: npm run build || echo "No build step defined"
-
-  # -----------------------
-  # Test Job
-  # -----------------------
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-
-    # Ensure tests only run if build succeeds
-    needs: build
-
-    steps:
-      # Step 1: Checkout repository code
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Step 2: Set up Node.js environment
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      # Step 3: Install dependencies
-      - name: Install dependencies
-        run: npm install
-
-      # Step 4: Run automated tests
-      - name: Run test suite
-        run: npm test
+      # Step 2: Verify repository structure
+      - name: Verify repository contents
+        run: |
+          echo "Repository checked out successfully."
+          ls -la

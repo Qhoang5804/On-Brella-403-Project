@@ -1,0 +1,7 @@
+{
+  "name": "on-brella-403-project",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node frontend/tests/frontend.test.js && node backend/tests/backend.test.js"
+  }
+}

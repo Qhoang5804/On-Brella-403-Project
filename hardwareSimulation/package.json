@@ -1,19 +1,12 @@
 {
   "name": "on-brella-hardware-mock",
   "version": "1.0.0",
-  "description": "Hardware simulation mock for On-Brella umbrella rental service",
-  "main": "hardware-mock.json",
+  "description": "Hardware simulation mock for On-Brella",
   "scripts": {
-    "mock:start": "mockoon-cli start --data hardware-mock.json --port 3000",
-    "mock:install": "npm install -g @mockoon/cli"
+    "start": "npx @mockoon/cli start --data hardware-mock.json --port 3000",
+    "test": "node tests/hardware-mock.test.js"
   },
-  "keywords": [
-    "mockoon",
-    "hardware-simulation",
-    "umbrella-rental"
-  ],
-  "author": "On-Brella Team",
-  "license": "MIT",
-  "devDependencies": {},
-  "dependencies": {}
+  "devDependencies": {
+    "@mockoon/cli": "^7.0.0"
+  }
 }

@@ -10,6 +10,17 @@ Link to living document: https://docs.google.com/document/d/1LU65YB4aleQ35Zhabvx
 * Toolset
 * Authors
 
+### A typical top-level directory layout
+
+    .
+    ├── build                   # Compiled files (alternatively `dist`)
+    ├── docs                    # Documentation files (alternatively `doc`)
+    ├── src                     # Source files (alternatively `lib` or `app`)
+    ├── test                    # Automated tests (alternatively `spec` or `tests`)
+    ├── tools                   # Tools and utilities
+    ├── LICENSE
+    └── README.md
+
 ## Description
 
 “On-the-go” Umbrella, or On-Brella, is a mobile self-service web application that allows users to rent and use umbrellas by using an app to locate umbrella stations in the local Seattle area. The app allows them to find a nearby location housing rentable umbrellas, and once nearby, can reserve an umbrella for an allocated amount of time. Once done, users return the umbrella to their closest available umbrella station, and check their umbrella into the station.

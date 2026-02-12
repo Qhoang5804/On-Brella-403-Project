@@ -1,6 +1,6 @@
 # On-Brella-403-Project
 
-Your on the go umbrella service
+Your on-the-go umbrella service!
 
 Link to living document: https://docs.google.com/document/d/1LU65YB4aleQ35Zhabvx-X3Wg0-YQ28uRWCdxK4oSLe8/edit?usp=sharing
 

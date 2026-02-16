@@ -1,45 +1,160 @@
-# Hardware simulation
+# Hardware Simulation
 
-This folder is a **mock** for umbrella stations. Config: `hardware-mock.json`. The backend talks to it instead of real hardware when you are developing or testing.
+Mock for On-Brella umbrella stations. Simulates physical station behavior (list stations, unlock, return) for development and testing without real hardware.
 
-**Start the mock**
+**Base URL:** `http://localhost:3000`
 
-**Option A — Mockoon desktop app (recommended if you have it)**  
-1. Open the Mockoon app on your laptop.  
-2. Import or open `hardware-mock.json` from this folder.  
-3. Start the server (port 3000).  
-4. Leave it running. The mock is at http://localhost:3000.
+---
 
-**Option B — CLI from terminal**  
+## Quick Start
+
 ```bash
+# 1. Install dependencies
+cd hardwareSimulation && npm install
+
+# 2. Start the mock (leave running)
 npm start
-```
-If you see **"environment's data are too recent"**, run `npm install` in this folder, then try again.
 
-The mock must be running for the tests below to pass.
-
-**Important: same machine**  
-`localhost:3000` is the **machine where the terminal runs**. If your terminal is on a **remote host** (e.g. attu6, SSH) and the Mockoon app is on your **laptop**, requests from the terminal go to the remote host’s localhost, not your laptop. So Mockoon never sees them and you get no logs.  
-**Fix:** Run the mock on the **same machine** as the terminal: use `npm start` in this folder on that machine (Option B). Then run `./test-mock.sh` or `npm test` there. If you must run Mockoon on your laptop and tests elsewhere, start the mock on the laptop, then run tests with `HARDWARE_URL=http://YOUR_LAPTOP_IP:3000 ./test-mock.sh` (and ensure Mockoon listens on all interfaces / your firewall allows port 3000).
-
-**Check endpoints**
-
-With the mock running, in another terminal run `./test-mock.sh` to hit all three endpoints and report OK/FAIL. Or run `npm test` for the Jest tests.
-
-**Run tests**
-
-In another terminal, from this folder:
-
-```bash
+# 3. In another terminal — verify endpoints
+./test-mock.sh
+# or
 npm test
 ```
 
-Tests call the mock (GET stations, POST unlock, etc.). They use Jest. Start the mock first or the tests will fail.
+---
 
-**Main endpoints**
+## Running the Mock
 
-- `GET /hardware/stations` — list all stations
-- `POST /hardware/unlock` — unlock an umbrella (body: `stationId`, `slotNumber`)
-- `POST /hardware/return` — return an umbrella (body: `stationId`, `slotNumber`, `umbrellaId`)
+### Option A — CLI (recommended)
 
-Your backend should call these when a user rents or returns an umbrella.
+```bash
+npm start
+```
+
+Starts Mockoon CLI on port 3000. Use this when developing on a remote server (e.g. attu) or in CI.
+
+> If you see **"environment's data are too recent"**, run `npm install` and try again.
+
+### Option B — Mockoon Desktop App
+
+1. Open [Mockoon](https://mockoon.com/)
+2. Import `hardware-mock.json` from this folder
+3. Start the server on port 3000
+
+Useful if you want to inspect requests in the Mockoon UI.
+
+### Same-Machine Rule
+
+`localhost:3000` is the machine where your terminal runs. If you're on a **remote host** (SSH) and Mockoon is on your **laptop**, the mock on your laptop will not receive requests.
+
+- **Same machine:** Run `npm start` on the machine where you run tests.
+- **Different machines:** Run the mock on your laptop, set `HARDWARE_URL=http://YOUR_LAPTOP_IP:3000`, and ensure Mockoon listens on all interfaces and your firewall allows port 3000.
+
+---
+
+## API Reference
+
+### GET /hardware/stations
+
+List all umbrella stations and their availability.
+
+**Response (200):**
+
+```json
+{
+  "stations": [
+    {
+      "stationId": "station-001",
+      "location": { "latitude": 47.6553, "longitude": -122.3035 },
+      "status": "operational",
+      "capacity": 10,
+      "numUmbrellas": 7,
+      "availableSlots": 3
+    }
+  ],
+  "totalStations": 2
+}
+```
+
+---
+
+### POST /hardware/unlock
+
+Unlock an umbrella at a station (start rental).
+
+**Request body:**
+
+| Field       | Type   | Required |
+|------------|--------|----------|
+| stationId  | string | yes      |
+| slotNumber | number | yes      |
+
+**Example:** `{ "stationId": "station-001", "slotNumber": 5 }`
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Umbrella unlocked successfully",
+  "stationId": "station-001",
+  "slotNumber": 5
+}
+```
+
+---
+
+### POST /hardware/return
+
+Return an umbrella to a station (end rental).
+
+**Request body:**
+
+| Field       | Type   | Required |
+|------------|--------|----------|
+| stationId  | string | yes      |
+| slotNumber | number | yes      |
+| umbrellaId | string | yes      |
+
+**Example:** `{ "stationId": "station-001", "slotNumber": 3, "umbrellaId": "umbrella-123" }`
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Umbrella returned successfully",
+  "stationId": "station-001",
+  "slotNumber": 3,
+  "umbrellaId": "umbrella-123"
+}
+```
+
+---
+
+## Testing
+
+| Command          | Description                            |
+|------------------|----------------------------------------|
+| `npm test`       | Run Jest tests against the mock        |
+| `./test-mock.sh` | Quick HTTP check (curl) of all 3 endpoints |
+
+**Requirement:** The mock must be running (`npm start`) before tests.
+
+**Override URL:** `HARDWARE_URL=http://host:3000 npm test` or `HARDWARE_URL=http://host:3000 ./test-mock.sh`
+
+---
+
+## Files
+
+| File                 | Purpose                          |
+|----------------------|----------------------------------|
+| `hardware-mock.json` | Mockoon config (stations, routes)|
+| `test-mock.sh`       | Shell script to verify endpoints |
+| `tests/hardware.jest.test.js` | Jest integration tests    |
+
+---
+
+## Integration
+
+The On-Brella backend calls these endpoints when users rent or return umbrellas. Point the backend at `http://localhost:3000` (or `HARDWARE_URL`) when the mock is running.

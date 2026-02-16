@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "scripts": {
     "test": "jest",
-    "test:node": "node frontend/tests/frontend.test.js && node backend/tests/backend.test.js",
+    "test:node": "node frontend/tests/frontend.test.js && node backend/tests/backend.test.js && node hardwareSimulation/tests/hardware.jest.test.js",
     "test:frontend": "node frontend/tests/frontend.test.js",
-    "test:backend": "node backend/tests/backend.test.js"
+    "test:backend": "node backend/tests/backend.test.js",
+    "test:hardware": "node hardwareSimulation/tests/hardware.jest.test.js"
   },
   "devDependencies": {
     "jest": "^30.2.0"

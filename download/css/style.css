@@ -1,0 +1,31 @@
+/* Tailwind custom styles and animation */
+.map-container { height: 100vh; width: 100%; position: relative; }
+.pulse-ring { animation: pulse 2s infinite; }
+@keyframes pulse { 0% { transform: scale(0.5); opacity:0 } 50% { opacity:0.5 } 100% { transform: scale(1.5); opacity:0 } }
+.bottom-sheet { border-top-left-radius: 24px; border-top-right-radius: 24px; background: #ffffff; }
+.dark-map-overlay { background: linear-gradient(to bottom, rgba(255,255,255,0.0), rgba(255,255,255,0.3)); }
+.station-panel { transition: transform 0.3s ease-in-out; transform: translateX(-100%); background: #ffffff; }
+.station-panel.open { transform: translateX(0); }
+
+/* Primary color */
+:root { --primary: #0da6f2; }
+.text-primary { color: var(--primary); }
+.bg-primary { background-color: var(--primary); }
+
+/* Find Station buttons - properly hide/show based on screen size */
+#findStationBtnMobile { 
+  display: flex; 
+}
+
+#findStationBtnDesktop { 
+  display: none; 
+}
+
+@media (min-width: 768px) {
+  #findStationBtnMobile { 
+    display: none; 
+  }
+  #findStationBtnDesktop { 
+    display: flex; 
+  }
+}

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>My Account - On-Brella</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#0da6f2",
+                    "background-light": "#f5f7f8",
+                    "background-dark": "#101c22",
+                },
+                fontFamily: {
+                    "display": ["Plus Jakarta Sans"]
+                },
+                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+        },
+    }
+</script>
+<style>
+    body {
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior-y: contain;
+    }
+    .ios-blur {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+  <!-- Status Bar (hidden on desktop, visible on mobile) -->
+  <div class="md:hidden w-full h-12 bg-white/80 dark:bg-background-dark/80 ios-blur sticky top-0 z-50 flex items-center justify-between px-6">
+    <span class="text-sm font-semibold">9:41</span>
+    <div class="flex items-center gap-1">
+      <span class="material-icons text-xs">signal_cellular_alt</span>
+      <span class="material-icons text-xs">wifi</span>
+      <span class="material-icons text-xs rotate-90">battery_full</span>
+    </div>
+  </div>
+
+  <!-- Desktop Layout: Sidebar + Main Content -->
+  <div class="flex min-h-screen">
+    <!-- Desktop Side Navigation (hidden on mobile) -->
+    <aside class="hidden md:flex md:flex-col md:w-64 md:bg-white/80 md:dark:bg-slate-900/80 md:ios-blur md:border-r md:border-slate-200 md:dark:border-slate-800 md:fixed md:inset-y-0 md:left-0 md:z-40">
+      <!-- Logo Area -->
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-primary text-3xl">umbrella</span>
+          <span class="text-xl font-bold">On-Brella</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex-1 px-4 py-6 space-y-2">
+        <a href="map.html" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors">
+          <span class="material-icons">map</span>
+          <span class="font-medium">Map</span>
+        </a>
+        <a href="umbrella.html" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors">
+          <span class="material-icons">umbrella</span>
+          <span class="font-medium">Active Rental</span>
+        </a>
+        <a href="history.html" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors">
+          <span class="material-icons">history</span>
+          <span class="font-medium">History</span>
+        </a>
+        <a href="account.html" class="flex items-center gap-3 px-4 py-3 text-primary bg-primary/10 rounded-xl">
+          <span class="material-icons">person</span>
+          <span class="font-medium">Account</span>
+        </a>
+      </nav>
+
+      <!-- User Info -->
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-3 px-4 py-2">
+          <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+            <span class="material-icons text-primary">person</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate" id="sidebarUserName">Alex Thompson</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 truncate" id="sidebarUserEmail">alex@example.com</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content (with left margin on desktop for sidebar) -->
+    <main class="flex-1 md:ml-64 flex flex-col min-h-screen">
+      <div class="flex-1 w-full max-w-md mx-auto px-6 pt-4 pb-32 overflow-y-auto">
+        <div class="flex flex-col items-center mb-8" id="userProfileSection">
+            <!-- User profile will be loaded here dynamically -->
+            <div class="relative mb-4">
+                <div class="w-24 h-24 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-900 shadow-lg">
+                    <span class="material-symbols-outlined text-5xl text-slate-400 dark:text-slate-600" id="userAvatar">person</span>
+                    <img id="profileImage" class="hidden w-full h-full object-cover" src="" alt="Profile">
+                </div>
+                <button class="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full shadow-md border-2 border-white dark:border-slate-900" onclick="openEditProfile()">
+                    <span class="material-symbols-outlined text-sm block">edit</span>
+                </button>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight" id="userName">Loading...</h1>
+            <p class="text-slate-500 dark:text-slate-400 font-medium" id="userEmail">Loading...</p>
+            <p class="text-xs text-slate-400 mt-1" id="memberSince">Member since: Loading...</p>
+        </div>
+
+        <!-- Account Statistics -->
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-3 text-center border border-slate-200 dark:border-slate-800">
+                <span class="text-primary font-bold text-xl" id="totalRentals">0</span>
+                <p class="text-xs text-slate-500">Rentals</p>
+            </div>
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-3 text-center border border-slate-200 dark:border-slate-800">
+                <span class="text-primary font-bold text-xl" id="totalHours">0</span>
+                <p class="text-xs text-slate-500">Hours</p>
+            </div>
+            <div class="bg-white dark:bg-slate-900 rounded-xl p-3 text-center border border-slate-200 dark:border-slate-800">
+                <span class="text-primary font-bold text-xl" id="totalSpent">$0</span>
+                <p class="text-xs text-slate-500">Spent</p>
+            </div>
+        </div>
+
+        <!-- Account Menu Items -->
+        <div class="space-y-6">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                <button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800" onclick="navigateTo('personal-info')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined">person</span>
+                        </div>
+                        <span class="font-semibold">Personal Information</span>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                </button>
+                
+                <button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800" onclick="navigateTo('payment-methods')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-green-50 dark:bg-green-900/20 text-green-500 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined">payments</span>
+                        </div>
+                        <span class="font-semibold">Payment Methods</span>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                </button>
+                
+                <button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800" onclick="navigateTo('notification-settings')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined">notifications</span>
+                        </div>
+                        <span class="font-semibold">Notification Settings</span>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                </button>
+                
+                <button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800" onclick="navigateTo('help-support')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 text-purple-500 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined">help</span>
+                        </div>
+                        <span class="font-semibold">Help & Support</span>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                </button>
+                
+                <button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors" onclick="navigateTo('privacy-security')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined">security</span>
+                        </div>
+                        <span class="font-semibold">Privacy & Security</span>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                </button>
+            </div>
+
+            <button class="w-full bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/30 p-4 rounded-2xl flex items-center justify-center gap-3 text-red-500 font-bold shadow-sm active:scale-[0.98] transition-all" onclick="logout()">
+                <span class="material-symbols-outlined">logout</span>
+                Log Out
+            </button>
+            
+            <p class="text-center text-xs text-slate-400 dark:text-slate-600 pt-4 font-medium" id="appVersion">
+                Version 2.4.0 (Build 882)
+            </p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Bottom Navigation (Mobile Only - Stretched style from umbrella.html) -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 z-50">
+    <nav class="bg-white/80 dark:bg-slate-900/80 ios-blur border-t border-slate-200 dark:border-slate-800 pb-safe pb-6 pt-3 grid grid-cols-4 w-full">
+      <a href="map.html" class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500">
+        <span class="material-icons">map</span>
+        <span class="text-[10px] font-medium">Map</span>
+      </a>
+      <a href="umbrella.html" class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500">
+        <span class="material-icons">umbrella</span>
+        <span class="text-[10px] font-medium">Active</span>
+      </a>
+      <a href="history.html" class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500">
+        <span class="material-icons">history</span>
+        <span class="text-[10px] font-medium">History</span>
+      </a>
+      <a href="account.html" class="flex flex-col items-center gap-1 text-primary">
+        <span class="material-icons" style="font-variation-settings: 'FILL' 1">person</span>
+        <span class="text-[10px] font-bold">Account</span>
+      </a>
+    </nav>
+
+    <!-- Home Indicator (Mobile Only) -->
+    <div class="bg-white dark:bg-slate-900 flex justify-center pb-2">
+      <div class="w-32 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+    </div>
+  </div>
+
+<script>
+// Sample user data (replace with actual API calls)
+let currentUser = {
+    id: 1,
+    name: "Alex Thompson",
+    email: "alex.thompson@email.com",
+    avatar: null,
+    joinDate: "2023-08-15",
+    totalRentals: 24,
+    totalHours: 38,
+    totalSpent: 89.50
+};
+
+// Load user data
+function loadUserData() {
+    displayUserData();
+}
+
+function displayUserData() {
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('userEmail').textContent = currentUser.email;
+    document.getElementById('sidebarUserName').textContent = currentUser.name;
+    document.getElementById('sidebarUserEmail').textContent = currentUser.email;
+    
+    const joinDate = new Date(currentUser.joinDate);
+    const formattedDate = joinDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    document.getElementById('memberSince').textContent = `Member since: ${formattedDate}`;
+    
+    document.getElementById('totalRentals').textContent = currentUser.totalRentals;
+    document.getElementById('totalHours').textContent = currentUser.totalHours;
+    document.getElementById('totalSpent').textContent = `$${currentUser.totalSpent.toFixed(2)}`;
+    
+    if (currentUser.avatar) {
+        document.getElementById('userAvatar').classList.add('hidden');
+        const profileImg = document.getElementById('profileImage');
+        profileImg.classList.remove('hidden');
+        profileImg.src = currentUser.avatar;
+    }
+}
+
+function openEditProfile() {
+    alert('Edit profile functionality - open modal or navigate to edit page');
+}
+
+function navigateTo(page) {
+    switch(page) {
+        case 'personal-info':
+            alert('Navigate to personal info');
+            break;
+        case 'payment-methods':
+            alert('Navigate to payment methods');
+            break;
+        case 'notification-settings':
+            alert('Navigate to notification settings');
+            break;
+        case 'help-support':
+            alert('Navigate to help & support');
+            break;
+        case 'privacy-security':
+            alert('Navigate to privacy & security');
+            break;
+    }
+}
+
+function logout() {
+    if (confirm('Are you sure you want to log out?')) {
+        window.location.href = 'login.html';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', loadUserData);
+</script>
+</body>
+</html>

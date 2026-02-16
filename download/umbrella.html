@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+  <title>Umbrella Rental - On-Brella</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0da6f2",
+            "background-light": "#f5f7f8",
+            "background-dark": "#101c22",
+          },
+          fontFamily: {
+            "display": ["Plus Jakarta Sans"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: contain;
+    }
+    .ios-blur {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .timer-ring {
+      stroke-dasharray: 283;
+      transition: stroke-dashoffset 1s linear;
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+  <!-- Status Bar (hidden on desktop, visible on mobile) -->
+  <div class="md:hidden w-full h-12 bg-white/80 dark:bg-background-dark/80 ios-blur sticky top-0 z-50 flex items-center justify-between px-6">
+    <span class="text-sm font-semibold">9:41</span>
+    <div class="flex items-center gap-1">
+      <span class="material-icons text-xs">signal_cellular_alt</span>
+      <span class="material-icons text-xs">wifi</span>
+      <span class="material-icons text-xs rotate-90">battery_full</span>
+    </div>
+  </div>
+
+  <!-- Desktop Layout: Sidebar + Main Content -->
+  <div class="flex min-h-screen">
+    <!-- Desktop Side Navigation (hidden on mobile) -->
+    <aside class="hidden md:flex md:flex-col md:w-64 md:bg-white/80 md:dark:bg-slate-900/80 md:ios-blur md:border-r md:border-slate-200 md:dark:border-slate-800 md:fixed md:inset-y-0 md:left-0 md:z-40">
+      <!-- Logo Area -->
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-primary text-3xl">umbrella</span>
+          <span class="text-xl font-bold">On-Brella</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex-1 px-4 py-6 space-y-2">
+        <a href="map.html" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors">
+          <span class="material-icons">map</span>
+          <span class="font-medium">Map</span>
+        </a>
+        <a href="active.html" class="flex items-center gap-3 px-4 py-3 text-primary bg-primary/10 rounded-xl">
+          <span class="material-icons">timer</span>
+          <span class="font-medium">Active Rental</span>
+        </a>
+        <a href="history.html" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors">
+          <span class="material-icons">history</span>
+          <span class="font-medium">History</span>
+        </a>
+        <a href="account.html" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors">
+          <span class="material-icons">person_outline</span>
+          <span class="font-medium">Account</span>
+        </a>
+      </nav>
+
+      <!-- User Info (optional) -->
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-3 px-4 py-2">
+          <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+            <span class="material-icons text-primary">person</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">John Doe</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">john@example.com</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content (with left margin on desktop for sidebar) -->
+    <main class="flex-1 md:ml-64 flex flex-col min-h-screen">
+      <!-- Main Content Area -->
+      <div class="flex-1 w-full max-w-md mx-auto px-6 pt-4 pb-32 overflow-y-auto">
+        <!-- Header & Status Badge -->
+        <div class="flex flex-col items-center mb-8">
+          <div class="bg-primary/10 dark:bg-primary/20 text-primary px-4 py-1 rounded-full text-xs font-bold tracking-widest flex items-center gap-2 mb-2">
+            <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+            RENTED
+          </div>
+          <h1 class="text-2xl font-bold tracking-tight">Current Rental</h1>
+        </div>
+
+        <!-- Visual Timer Section -->
+        <div class="relative flex flex-col items-center justify-center py-6 mb-8">
+          <div class="relative w-64 h-64 flex items-center justify-center">
+            <!-- Circular Progress Background -->
+            <svg class="absolute inset-0 w-full h-full -rotate-90">
+              <circle class="text-slate-200 dark:text-slate-800" cx="128" cy="128" fill="none" r="110" stroke="currentColor" stroke-width="12"></circle>
+              <circle class="timer-ring" cx="128" cy="128" fill="none" r="110" stroke="url(#primaryGradient)" stroke-linecap="round" stroke-width="12" stroke-dashoffset="70"></circle>
+              <defs>
+                <linearGradient id="primaryGradient" x1="0%" x2="100%" y1="0%" y2="0%">
+                  <stop offset="0%" stop-color="#0da6f2"></stop>
+                  <stop offset="100%" stop-color="#3b82f6"></stop>
+                </linearGradient>
+              </defs>
+            </svg>
+            <!-- Time Display -->
+            <div class="flex flex-col items-center z-10">
+              <span class="text-5xl font-bold tracking-tighter tabular-nums">00:42:18</span>
+              <span class="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">ELAPSED TIME</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rental Details Cards -->
+        <div class="space-y-4">
+          <!-- Umbrella Info Card -->
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+              <span class="material-icons text-primary">umbrella</span>
+            </div>
+            <div class="flex-1">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Umbrella ID</p>
+              <p class="text-lg font-bold">#OB-9920-XL</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Est. Cost</p>
+              <p class="text-lg font-bold text-primary">$2.40</p>
+            </div>
+          </div>
+
+          <!-- Station Info Card -->
+          <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center gap-4 mb-3">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                <span class="material-icons text-primary">location_on</span>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Picked up from</p>
+                <p class="text-lg font-bold">Central Station North</p>
+              </div>
+            </div>
+            <div class="h-32 w-full rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
+              <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV7bXNdU_Sk-7IADj9xAw4f9V8uxM0GUAmpxn0ugNIJEXVOys1jNRPp6Fv5YTyPsifV_qrcxiqpWW5ODI__YrPXkJmTHwX0cN2LqxtqhyvCbvXiB28HqYYJjyEGgS4FPlj_bZbKXT1GIjf98cS8el8KixhVr50pdjHCwrw1sN5JrzgsKGtolAe3nxe2BLuBmgtWOutrwg0Tg6Lm9UHB7XOqHdFczAwC3VnCsRFcMPqfckKlsnqY68wNEqblMHYAnYUOnmPdAxMbIVZ"/>
+            </div>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <span class="material-icons text-xs">schedule</span>
+              Pickup at 14:12 PM
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Actions (Mobile Only) -->
+      <div class="md:hidden fixed bottom-0 left-0 right-0 z-50">
+        <!-- Return Button -->
+        <div class="px-6 pb-6 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/95 dark:via-background-dark/95 to-transparent pt-8">
+          <button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-transform">
+            <span class="material-icons">qr_code_scanner</span>
+            RETURN UMBRELLA
+          </button>
+        </div>
+
+        <!-- Stretched iOS Bottom Tab Bar -->
+        <nav class="bg-white/80 dark:bg-slate-900/80 ios-blur border-t border-slate-200 dark:border-slate-800 pb-safe pb-6 pt-3 grid grid-cols-4 w-full">
+          <a href="map.html" class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500">
+            <span class="material-icons">map</span>
+            <span class="text-[10px] font-medium">Map</span>
+          </a>
+          <a href="active.html" class="flex flex-col items-center gap-1 text-primary">
+            <span class="material-icons">umbrella</span>
+            <span class="text-[10px] font-bold">Active</span>
+          </a>
+          <a href="history.html" class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500">
+            <span class="material-icons">history</span>
+            <span class="text-[10px] font-medium">History</span>
+          </a>
+          <a href="account.html" class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500">
+            <span class="material-icons">person</span>
+            <span class="text-[10px] font-medium">Account</span>
+          </a>
+        </nav>
+
+        <!-- Home Indicator (Mobile Only) -->
+        <div class="bg-white dark:bg-slate-900 flex justify-center pb-2">
+          <div class="w-32 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Desktop Return Button (Fixed at bottom right on desktop) -->
+  <div class="hidden md:block fixed bottom-8 right-8 z-50">
+    <button class="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-transform">
+      <span class="material-icons">qr_code_scanner</span>
+      RETURN UMBRELLA
+    </button>
+  </div>
+
+  <script>
+    // Rental state
+    let hasActiveRental = false;
+    let rentalStartTime = null;
+    let timerInterval = null;
+    let rentalData = {
+      umbrellaId: '#OB-9920-XL',
+      location: 'Central Station North',
+      pickupTime: '14:12 PM',
+      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCV7bXNdU_Sk-7IADj9xAw4f9V8uxM0GUAmpxn0ugNIJEXVOys1jNRPp6Fv5YTyPsifV_qrcxiqpWW5ODI__YrPXkJmTHwX0cN2LqxtqhyvCbvXiB28HqYYJjyEGgS4FPlj_bZbKXT1GIjf98cS8el8KixhVr50pdjHCwrw1sN5JrzgsKGtolAe3nxe2BLuBmgtWOutrwg0Tg6Lm9UHB7XOqHdFczAwC3VnCsRFcMPqfckKlsnqY68wNEqblMHYAnYUOnmPdAxMbIVZ'
+    };
+
+    // DOM Elements
+    const emptyState = document.getElementById('emptyState');
+    const activeRentalState = document.getElementById('activeRentalState');
+    const statusBadge = document.getElementById('statusBadge');
+    const returnButtonContainer = document.getElementById('returnButtonContainer');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const progressCircle = document.getElementById('progressCircle');
+    const umbrellaIdSpan = document.getElementById('umbrellaId');
+    const estimatedCostSpan = document.getElementById('estimatedCost');
+    const pickupLocationSpan = document.getElementById('pickupLocation');
+    const pickupTimeSpan = document.getElementById('pickupTime');
+    const locationImage = document.getElementById('locationImage');
+
+    // Constants
+    const HOURLY_RATE = 1.20; // $1.20 per hour
+    const MAX_RENTAL_HOURS = 24; // 24 hours max
+    const TOTAL_CIRCLE_LENGTH = 283; // circumference of circle (2 * π * r) where r=45
+
+    // Initialize the page
+    function initializePage() {
+      // Check if there's an active rental in localStorage
+      const savedRental = localStorage.getItem('activeRental');
+      if (savedRental) {
+        const rental = JSON.parse(savedRental);
+        hasActiveRental = true;
+        rentalStartTime = new Date(rental.startTime);
+        rentalData = rental.data;
+        showActiveRental();
+        startTimer();
+      } else {
+        showEmptyState();
+      }
+    }
+
+    // Show empty state
+    function showEmptyState() {
+      emptyState.classList.remove('hidden');
+      activeRentalState.classList.add('hidden');
+      statusBadge.innerHTML = `
+        <span class="w-2 h-2 bg-slate-400 rounded-full"></span>
+        NO ACTIVE RENTAL
+      `;
+      returnButtonContainer.classList.add('hidden');
+    }
+
+    // Show active rental state
+    function showActiveRental() {
+      emptyState.classList.add('hidden');
+      activeRentalState.classList.remove('hidden');
+      statusBadge.innerHTML = `
+        <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+        RENTED
+      `;
+      returnButtonContainer.classList.remove('hidden');
+      
+      // Update rental details
+      umbrellaIdSpan.textContent = rentalData.umbrellaId;
+      pickupLocationSpan.textContent = rentalData.location;
+      pickupTimeSpan.innerHTML = `<span class="material-icons text-xs">schedule</span> Pickup at ${rentalData.pickupTime}`;
+      locationImage.src = rentalData.imageUrl;
+    }
+
+    // Start rental (simulate QR scan)
+    function startRental() {
+      // In a real app, this would open a QR scanner
+      // For demo, we'll simulate a rental start
+      const now = new Date();
+      
+      // Generate random pickup location
+      const locations = [
+        { name: 'Central Station North', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCV7bXNdU_Sk-7IADj9xAw4f9V8uxM0GUAmpxn0ugNIJEXVOys1jNRPp6Fv5YTyPsifV_qrcxiqpWW5ODI__YrPXkJmTHwX0cN2LqxtqhyvCbvXiB28HqYYJjyEGgS4FPlj_bZbKXT1GIjf98cS8el8KixhVr50pdjHCwrw1sN5JrzgsKGtolAe3nxe2BLuBmgtWOutrwg0Tg6Lm9UHB7XOqHdFczAwC3VnCsRFcMPqfckKlsnqY68wNEqblMHYAnYUOnmPdAxMbIVZ' },
+        { name: 'Beach Boardwalk', image: 'https://lh3.googleusercontent.com/aida-public/example-beach.jpg' },
+        { name: 'City Park Entrance', image: 'https://lh3.googleusercontent.com/aida-public/example-park.jpg' }
+      ];
+      
+      const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+      
+      rentalData = {
+        umbrellaId: '#OB-' + Math.floor(Math.random() * 9000 + 1000) + '-XL',
+        location: randomLocation.name,
+        pickupTime: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        imageUrl: randomLocation.image
+      };
+      
+      rentalStartTime = now;
+      hasActiveRental = true;
+      
+      // Save to localStorage
+      localStorage.setItem('activeRental', JSON.stringify({
+        startTime: rentalStartTime.toISOString(),
+        data: rentalData
+      }));
+      
+      showActiveRental();
+      startTimer();
+    }
+
+    // Return umbrella
+    function returnUmbrella() {
+      // Stop timer
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      
+      // Clear rental data
+      hasActiveRental = false;
+      rentalStartTime = null;
+      localStorage.removeItem('activeRental');
+      
+      // Show empty state
+      showEmptyState();
+      
+      // In a real app, you might navigate to payment/receipt page
+      alert('Rental ended! Total cost: ' + estimatedCostSpan.textContent);
+    }
+
+    // Start the timer
+    function startTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+      
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    // Update timer display and progress
+    function updateTimer() {
+      if (!rentalStartTime) return;
+      
+      const now = new Date();
+      const elapsedMs = now - rentalStartTime;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+      const elapsedHours = Math.floor(elapsedMinutes / 60);
+      
+      // Format time display (HH:MM:SS)
+      const hours = Math.floor(elapsedSeconds / 3600);
+      const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+      const seconds = elapsedSeconds % 60;
+      
+      timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      // Calculate and update estimated cost
+      const cost = (elapsedHours + (minutes / 60)) * HOURLY_RATE;
+      estimatedCostSpan.textContent = `$${cost.toFixed(2)}`;
+      
+      // Update progress circle (based on 24-hour max rental period)
+      const progressPercent = Math.min(elapsedSeconds / (MAX_RENTAL_HOURS * 3600), 1);
+      const dashOffset = TOTAL_CIRCLE_LENGTH * (1 - progressPercent);
+      progressCircle.style.strokeDashoffset = dashOffset;
+      
+      // Change color warning if approaching max time
+      if (progressPercent > 0.9) {
+        progressCircle.setAttribute('stroke', '#ef4444');
+      } else if (progressPercent > 0.75) {
+        progressCircle.setAttribute('stroke', '#f59e0b');
+      } else {
+        progressCircle.setAttribute('stroke', 'url(#primaryGradient)');
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initializePage);
+  </script>
+</body>
+</html>

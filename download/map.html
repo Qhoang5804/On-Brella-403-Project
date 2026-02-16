@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>On-Brella | UW Map</title>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+<link rel="stylesheet" href="style.css"/>
+
+<link type="text/css" rel="stylesheet" href="css/style.css"/>
+</head>
+<body class="font-display text-slate-900 bg-white">
+
+<div class="map-container relative">
+  <!-- Map Background -->
+  <div class="absolute inset-0 bg-slate-900">
+    <img class="w-full h-full object-cover brightness-[0.4] contrast-[1.2] grayscale-[0.5]"
+      src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAEIx2jSbTnyHbm65nvX2oBeSyjtULSwhHCFaUJzza5w0dxYfCzbVgVV75mA8FRWO87IvfmFLWHs3z7KHykggqi7_PZzGWvtmuhj65y572XxNoCfXUzNWgXu-l1sGkzbpSpeWfJGp2wvczu-p4FlAn2WIL2F8bMclaeoBBDCgf24PW30V2k5zUEjzCj2iS-JMCABCID4Wv4tlSb0yvwP3LUFbJh9-KRGK0kOiVSwyX8fRzp3_xWr48-SXVGqfxvOAyqfUQHNeHpHxK"/>
+    <div class="absolute inset-0 dark-map-overlay pointer-events-none"></div>
+  </div>
+
+  <!-- User Location -->
+  <div class="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2">
+    <div class="relative flex items-center justify-center">
+      <div class="absolute w-10 h-10 bg-primary/30 rounded-full pulse-ring"></div>
+      <div class="w-5 h-5 bg-primary border-2 border-white rounded-full shadow-lg z-10"></div>
+    </div>
+  </div>
+
+  <!-- Mobile Find Station Button (above nav) -->
+  <button id="findStationBtnMobile"
+          class="md:hidden fixed bottom-20 right-5 z-30 flex items-center gap-2 px-4 py-3 bg-white rounded-2xl shadow-lg font-bold text-slate-800 hover:shadow-xl transition">
+    <span class="material-icons text-primary">location_on</span>
+    Find Station
+  </button>
+
+  <!-- Desktop Find Station Button (bottom right circle) -->
+  <button id="findStationBtnDesktop"
+          class="hidden md:flex fixed bottom-10 right-10 z-30 items-center justify-center w-14 h-14 bg-white rounded-full shadow-lg hover:shadow-xl transition">
+    <span class="material-icons text-primary text-2xl">location_on</span>
+  </button>
+
+  <!-- Right-side desktop nav -->
+  <nav class="hidden md:flex fixed top-1/2 right-5 -translate-y-1/2 flex-col bg-white rounded-3xl shadow-xl p-4 gap-4 z-30">
+    <a class="flex items-center gap-3 px-3 py-2 bg-primary text-white rounded-xl shadow-lg hover:bg-primary/90 transition-colors" href="map.html">
+      <span class="material-icons">explore</span>
+    </a>
+    <a class="flex items-center gap-3 px-3 py-2 bg-white text-primary rounded-xl shadow-lg hover:bg-primary/10 transition-colors" href="umbrella.html">
+      <span class="material-icons">umbrella</span>
+    </a>
+    <a class="flex items-center gap-3 px-3 py-2 bg-white text-primary rounded-xl shadow-lg hover:bg-primary/10 transition-colors" href="history.html">
+      <span class="material-icons">history</span>
+    </a>
+    <a class="flex items-center gap-3 px-3 py-2 bg-white text-primary rounded-xl shadow-lg hover:bg-primary/10 transition-colors" href="account.html">
+      <span class="material-icons">person_outline</span>
+    </a>
+  </nav>
+
+  <!-- Mobile bottom nav -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-100 px-6 py-3 flex justify-between items-center z-30 md:hidden">
+    <a class="flex flex-col items-center gap-1 text-primary" href="index.html">
+      <span class="material-icons">explore</span>
+      <span class="text-[10px] font-bold">Map</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400" href="umbrella.html">
+      <span class="material-icons">umbrella</span>
+      <span class="text-[10px] font-bold">Active</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400" href="history.html">
+      <span class="material-icons">history</span>
+      <span class="text-[10px] font-bold">History</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-400" href="account.html">
+      <span class="material-icons text-xl">person_outline</span>
+      <span class="text-[10px] font-bold">Account</span>
+    </a>
+  </nav>
+
+  <!-- Desktop station panel -->
+  <div id="stationPanel" class="station-panel hidden md:block fixed top-0 left-0 h-full w-96 bg-white shadow-xl z-20 p-6 overflow-y-auto">
+    <div id="stationPanelContent"></div>
+  </div>
+
+  <!-- Mobile bottom sheet -->
+  <div id="bottomSheet" class="bottom-sheet absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 pb-28 z-20 translate-y-full transition-transform duration-300 md:hidden">
+    <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
+    <div id="bottomSheetContent"></div>
+  </div>
+
+</div>
+
+<script src="stations.js"></script>
+<script type="text/javascript" src="js/script.js"></script>
+</body>
+</html>

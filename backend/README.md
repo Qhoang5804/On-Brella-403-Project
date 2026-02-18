@@ -6,12 +6,12 @@ REST API for umbrella rental. Modular, extensible structure.
 
 ```
 src/
-├── config/           # Env config (PORT, HARDWARE_URL)
+├── config/           # Env config (PORT, HARDWARE_URL, DATABASE_URL)
+├── db/               # Database layer (Supabase/Postgres)
 ├── middleware/       # Error handling, validation
 ├── routes/           # API route handlers (stations, rent, return)
 ├── services/         # Business logic (rentalService, hardwareClient)
-├── store/            # In-memory rental store (extensible to DB)
-├── store.js          # Station inventory (admin; legacy)
+├── store/            # Rental store (DB via rentalStoreDb)
 ├── app.js            # Express app
 └── server.js         # Entry point
 ```
@@ -37,12 +37,31 @@ npm start
 
 Server runs on port **5001** by default (or `PORT` env var). Port 5000 is avoided by default because macOS often uses it for AirPlay Receiver. Start the hardware mock (Mockoon) on port 3000 first: `cd hardwareSimulation && npm start` or run your Mockoon env on 3000.
 
+## Database (Supabase)
+
+The backend connects to **Supabase (Postgres)** when `DATABASE_URL` is set. The database layer is used only by the business layer, never by the frontend.
+
+**Setup**
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. In **Project Settings → Database**, copy the **Connection string (URI)**. Use **Transaction** mode and replace `[YOUR-PASSWORD]` with your database password.
+3. In the backend folder, copy `.env.example` to `.env` and set:
+   ```env
+   DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+   ```
+4. Ensure your Supabase project has the expected tables (`stations`, `umbrellas`, `user`, `rentals`). The file `src/db/schema.sql` is reference only (tables are already in Supabase).
+
+**Health check:** `GET /health` returns `{ status: "ok", database: "connected" }` when the DB is reachable.
+
+**POST /api/rent** and **POST /api/return** persist to the `rentals` table. `DATABASE_URL` is required to run the backend.
+
 ## Environment
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | PORT | 5001 | Server port |
 | HARDWARE_URL | http://localhost:3000 | Hardware mock URL |
+| DATABASE_URL | — | Supabase/Postgres connection URI (required) |
 
 ## Testing with Hoppscotch
 
@@ -74,9 +93,7 @@ npm run test:backend
 | File | Coverage |
 |------|----------|
 | `config.jest.test.js` | Config env vars |
-| `rentalStore.jest.test.js` | In-memory rental CRUD |
-| `rentalService.jest.test.js` | Business logic (mocked hardware) |
+| `rentalService.jest.test.js` | Business logic (mocked hardware, mocked store) |
 | `hardwareClient.jest.test.js` | Hardware API client (mocked fetch) |
 | `middleware.jest.test.js` | Validation, error handler |
-| `api.jest.test.js` | Full API integration (mocked hardware) |
-| `store.jest.test.js` | Station inventory store |
+| `api.jest.test.js` | Full API integration (mocked hardware and store) |

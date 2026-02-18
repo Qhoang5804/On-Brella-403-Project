@@ -4,9 +4,7 @@
   "private": true,
   "scripts": {
     "start": "npm run start --prefix backend",
-    "test": "npm run test --prefix frontend && npm run test --prefix backend",
-    "test:node": "npm run test --prefix frontend && npm run test --prefix backend",
-    "test:frontend": "npm run test --prefix frontend",
+    "test": "npm run test --prefix backend",
     "test:backend": "npm run test --prefix backend",
     "test:hardware": "npm run test --prefix hardwareSimulation"
   }

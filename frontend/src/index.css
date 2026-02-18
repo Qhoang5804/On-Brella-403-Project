@@ -16,21 +16,51 @@ body {
 }
 
 .pulse-ring {
-  animation: pulse 2s infinite;
+  animation: pulse 1.4s ease-out infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes pulse {
   0% {
-    transform: scale(0.5);
-    opacity: 0;
+    transform: scale(0.7);
+    opacity: 0.35;
   }
-  50% {
-    opacity: 0.5;
+  40% {
+    opacity: 0.9;
   }
   100% {
-    transform: scale(1.5);
+    transform: scale(2.1);
     opacity: 0;
   }
+}
+
+/* Style Leaflet zoom controls to match app blue/white UI */
+.leaflet-control-zoom a.leaflet-control-zoom-in,
+.leaflet-control-zoom a.leaflet-control-zoom-out {
+  background: #ffffff;
+  color: #0da6f2;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+  border: 1px solid rgba(2,6,23,0.06);
+  font-size: 18px;
+}
+
+.leaflet-control-zoom a.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom a.leaflet-control-zoom-out:hover {
+  background: #f8fafc;
+}
+
+.dark .leaflet-control-zoom a.leaflet-control-zoom-in,
+.dark .leaflet-control-zoom a.leaflet-control-zoom-out {
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .material-symbols-outlined {

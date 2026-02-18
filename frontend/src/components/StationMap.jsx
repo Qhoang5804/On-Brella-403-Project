@@ -34,9 +34,14 @@ function UserLocationMarker() {
   if (!position) return null;
   const userIcon = L.divIcon({
     className: "user-location-marker",
-    html: `<div style="width:16px;height:16px;border-radius:50%;background:#0da6f2;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
+    html: `
+      <div style="position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center;">
+        <div class="pulse-ring" style="position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(13,166,242,0.35);"></div>
+        <div style="width:16px;height:16px;border-radius:50%;background:#0da6f2;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);position:relative;z-index:2;"></div>
+      </div>
+    `,
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
   });
   return <Marker position={position} icon={userIcon} />;
 }
@@ -51,7 +56,11 @@ function CenterOnUser({ mapRef }) {
     );
   }, [map]);
   useEffect(() => {
-    if (mapRef) mapRef.current = { goToUser };
+    if (mapRef)
+      mapRef.current = {
+        goToUser,
+        setView: (latlng) => map.setView(latlng, map.getZoom()),
+      };
   }, [mapRef, goToUser]);
   return null;
 }

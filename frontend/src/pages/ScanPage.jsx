@@ -45,6 +45,32 @@ export function ScanPage() {
     async (decodedText) => {
       if (status === "loading") return;
       const payload = parseQrPayload(decodedText);
+      // If returning rental, accept ANY recognized QR code and go to thank-you.
+      if (isReturn) {
+        if (!activeRental) {
+          setError("No active rental to return");
+          setStatus("idle");
+          return;
+        }
+        setError(null);
+        setStatus("loading");
+        try {
+          if (payload?.stationId) {
+            await endRental(payload.stationId, payload.slotNumber);
+          } else {
+            // Fallback: attempt to end rental at the original pickup station
+            await endRental(activeRental.stationId, 0);
+          }
+          // Successful end: navigate to thank-you which will show fees and duration
+          navigate("/thank-you", { replace: true });
+        } catch (e) {
+          setError(e.message || "Failed to end rental");
+          setStatus("idle");
+        }
+        return;
+      }
+
+      // Normal rent flow: require a valid payload
       if (!payload?.stationId) {
         setError("Invalid QR code");
         return;
@@ -52,18 +78,8 @@ export function ScanPage() {
       setError(null);
       setStatus("loading");
       try {
-        if (isReturn) {
-          if (!activeRental) {
-            setError("No active rental to return");
-            setStatus("idle");
-            return;
-          }
-          await endRental(payload.stationId, payload.slotNumber);
-          navigate("/thank-you", { replace: true });
-        } else {
-          await startRental(payload.stationId, payload.slotNumber);
-          navigate("/active", { replace: true });
-        }
+        await startRental(payload.stationId, payload.slotNumber);
+        navigate("/active", { replace: true });
       } catch (e) {
         setError(e.message || "Something went wrong");
         setStatus("idle");

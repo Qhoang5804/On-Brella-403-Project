@@ -1,19 +1,13 @@
 {
   "name": "on-brella-403-project",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "start": "node backend/src/server.js",
-    "test": "jest",
-    "test:node": "node frontend/tests/frontend.test.js && jest backend/tests",
-    "test:frontend": "node frontend/tests/frontend.test.js",
-    "test:backend": "jest backend/tests",
-    "test:hardware": "node hardwareSimulation/tests/hardware.jest.test.js"
-  },
-  "dependencies": {
-    "express": "^4.21.0"
-  },
-  "devDependencies": {
-    "jest": "^30.2.0",
-    "supertest": "^7.0.0"
+    "start": "npm run start --prefix backend",
+    "test": "npm run test --prefix frontend && npm run test --prefix backend",
+    "test:node": "npm run test --prefix frontend && npm run test --prefix backend",
+    "test:frontend": "npm run test --prefix frontend",
+    "test:backend": "npm run test --prefix backend",
+    "test:hardware": "npm run test --prefix hardwareSimulation"
   }
 }

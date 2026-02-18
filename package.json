@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "npm run start --prefix backend",
-    "test": "npm run test --prefix backend",
+    "test": "npm install --prefix backend && npm run test --prefix backend",
     "test:backend": "npm run test --prefix backend",
     "test:hardware": "npm run test --prefix hardwareSimulation"
   }

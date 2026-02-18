@@ -1,6 +1,7 @@
 /**
  * Backend entry point. Starts the Express server.
  */
+require("dotenv").config();
 
 const app = require("./app");
 const config = require("./config");

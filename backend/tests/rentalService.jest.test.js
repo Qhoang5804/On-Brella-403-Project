@@ -1,10 +1,14 @@
 /**
- * Rental service unit tests. Mocks hardwareClient.
+ * Rental service unit tests. Mocks hardwareClient and getRentalStore (no DB).
  */
 
 const mockUnlock = jest.fn();
 const mockReturnUmbrella = jest.fn();
 const mockGetStations = jest.fn();
+
+const { createMockRentalStore } = require("./mockRentalStore");
+const mockStore = createMockRentalStore();
+jest.mock("../src/store/getRentalStore", () => () => mockStore);
 
 jest.mock("../src/services/hardwareClient", () => ({
   getStations: (...args) => mockGetStations(...args),
@@ -19,12 +23,11 @@ jest.mock("../src/services/hardwareClient", () => ({
 }));
 
 jest.resetModules();
-const rentalStore = require("../src/store/rentalStore");
 const rentalService = require("../src/services/rentalService");
 const { RentalError } = rentalService;
 
 beforeEach(() => {
-  rentalStore.clear();
+  mockStore.clear();
   mockGetStations.mockResolvedValue({
     stations: [{ stationId: "station-001" }],
     totalStations: 1,

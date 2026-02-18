@@ -4,7 +4,7 @@
  */
 
 const hardwareClient = require("./hardwareClient");
-const rentalStore = require("../store/rentalStore");
+const getRentalStore = require("../store/getRentalStore");
 
 class RentalError extends Error {
   constructor(message, statusCode = 400) {
@@ -29,12 +29,12 @@ async function getStations() {
  * @returns {Promise<{success: boolean, rentalId: string, umbrellaId: string, startTime: string}>}
  */
 async function startRental(sessionId, stationId, slotNumber) {
-  const existing = rentalStore.getActiveBySession(sessionId);
+  const store = getRentalStore();
+  const existing = await store.getActiveBySession(sessionId);
   if (existing) {
     throw new RentalError("Session already has an active rental", 409);
   }
 
-  const { create } = rentalStore;
   const { unlock } = hardwareClient;
 
   try {
@@ -46,7 +46,7 @@ async function startRental(sessionId, stationId, slotNumber) {
     throw new RentalError(err.message || "Unlock failed", err.statusCode || 409);
   }
 
-  const { rentalId, umbrellaId, startTime } = create(sessionId, stationId, slotNumber);
+  const { rentalId, umbrellaId, startTime } = await store.create(sessionId, stationId, slotNumber);
 
   return {
     success: true,
@@ -66,7 +66,8 @@ async function startRental(sessionId, stationId, slotNumber) {
  * @returns {Promise<{success: boolean, rentalId: string, endTime: string}>}
  */
 async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId) {
-  const rental = rentalStore.getById(rentalId);
+  const store = getRentalStore();
+  const rental = await store.getById(rentalId);
   if (!rental) {
     throw new RentalError("Rental not found", 404);
   }
@@ -77,7 +78,6 @@ async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId)
     throw new RentalError("Rental does not belong to this session", 403);
   }
 
-  const { complete } = rentalStore;
   const { returnUmbrella } = hardwareClient;
 
   try {
@@ -89,7 +89,7 @@ async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId)
     throw new RentalError(err.message || "Return failed", err.statusCode || 409);
   }
 
-  const updated = complete(rentalId, stationId, slotNumber);
+  const updated = await store.complete(rentalId, stationId, slotNumber);
   if (!updated) {
     throw new RentalError("Failed to complete rental", 500);
   }

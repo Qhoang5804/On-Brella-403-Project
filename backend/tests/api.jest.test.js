@@ -1,9 +1,12 @@
 /**
- * API integration tests. Uses supertest; mocks hardware client so no mock server needed.
+ * API integration tests. Uses supertest; mocks hardware client and rental store (no DB).
  */
 
 const request = require("supertest");
-const { backendInitialized } = require("../src/server");
+const { createMockRentalStore } = require("./mockRentalStore");
+
+const mockStore = createMockRentalStore();
+jest.mock("../src/store/getRentalStore", () => () => mockStore);
 
 jest.mock("../src/services/hardwareClient", () => ({
   getStations: jest.fn().mockResolvedValue({
@@ -38,11 +41,10 @@ jest.mock("../src/services/hardwareClient", () => ({
 }));
 
 jest.resetModules();
-const rentalStore = require("../src/store/rentalStore");
-const { app } = require("../src/server");
+const { backendInitialized, app } = require("../src/server");
 
 beforeEach(() => {
-  rentalStore.clear();
+  mockStore.clear();
   jest.clearAllMocks();
 });
 

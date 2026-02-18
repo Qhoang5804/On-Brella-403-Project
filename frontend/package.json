@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "jest"
+    "test": "npx jest"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

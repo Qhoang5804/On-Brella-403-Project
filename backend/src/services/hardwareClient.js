@@ -11,7 +11,15 @@ const BASE_URL = config.hardwareUrl;
  * @returns {Promise<{stations: Array, totalStations: number}>}
  */
 async function getStations() {
-  const res = await fetch(`${BASE_URL}/hardware/stations`);
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/hardware/stations`);
+  } catch (e) {
+    throw new HardwareError(
+      "Stations service unavailable. Is the hardware mock running?",
+      502
+    );
+  }
   if (!res.ok) {
     throw new HardwareError(`Hardware API error: ${res.status}`, res.status);
   }

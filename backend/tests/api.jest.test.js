@@ -8,6 +8,13 @@ const { createMockRentalStore } = require("./mockRentalStore");
 const mockStore = createMockRentalStore();
 jest.mock("../src/store/getRentalStore", () => () => mockStore);
 
+jest.mock("../src/db/stations", () => ({
+  upsertStation: jest.fn().mockResolvedValue(),
+  getByStationId: jest.fn().mockResolvedValue({ num_brellas: 7 }),
+  decrementNumBrellas: jest.fn().mockResolvedValue(),
+  incrementNumBrellas: jest.fn().mockResolvedValue(),
+}));
+
 jest.mock("../src/services/hardwareClient", () => ({
   getStations: jest.fn().mockResolvedValue({
     stations: [
@@ -16,8 +23,6 @@ jest.mock("../src/services/hardwareClient", () => ({
         location: { latitude: 47.6553, longitude: -122.3035 },
         status: "operational",
         capacity: 10,
-        numUmbrellas: 7,
-        availableSlots: 3,
       },
     ],
     totalStations: 1,

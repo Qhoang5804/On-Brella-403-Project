@@ -5,6 +5,7 @@
 
 const hardwareClient = require("./hardwareClient");
 const getRentalStore = require("../store/getRentalStore");
+const stationsDb = require("../db/stations");
 
 class RentalError extends Error {
   constructor(message, statusCode = 400) {
@@ -16,9 +17,37 @@ class RentalError extends Error {
 
 /**
  * @returns {Promise<{stations: Array, totalStations: number}>}
+ * Permanent station info from hardware; availability (numUmbrellas, availableSlots) from DB.
  */
 async function getStations() {
-  return hardwareClient.getStations();
+  const { stations: rawStations, totalStations } = await hardwareClient.getStations();
+  const hasDb = !!require("../db").getPool();
+
+  const stations = await Promise.all(
+    rawStations.map(async (s) => {
+      const capacity = s.capacity ?? 10;
+      let numUmbrellas = capacity;
+      if (hasDb) {
+        await stationsDb.upsertStation({
+          stationId: s.stationId,
+          latitude: s.location?.latitude,
+          longitude: s.location?.longitude,
+          capacity,
+          status: s.status ?? "operational",
+        });
+        const row = await stationsDb.getByStationId(s.stationId);
+        if (row) numUmbrellas = row.num_brellas ?? capacity;
+      }
+      const availableSlots = Math.max(0, capacity - numUmbrellas);
+      return {
+        ...s,
+        numUmbrellas,
+        availableSlots,
+      };
+    })
+  );
+
+  return { stations, totalStations };
 }
 
 /**
@@ -47,6 +76,8 @@ async function startRental(sessionId, stationId, slotNumber) {
   }
 
   const { rentalId, umbrellaId, startTime } = await store.create(sessionId, stationId, slotNumber);
+
+  await stationsDb.decrementNumBrellas(stationId);
 
   return {
     success: true,
@@ -93,6 +124,8 @@ async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId)
   if (!updated) {
     throw new RentalError("Failed to complete rental", 500);
   }
+
+  await stationsDb.incrementNumBrellas(stationId);
 
   return {
     success: true,

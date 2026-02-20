@@ -5,6 +5,7 @@
   "main": "hardware-mock.json",
   "scripts": {
     "start": "npx @mockoon/cli start --data hardware-mock.json --port 3000",
+    "start:3001": "npx @mockoon/cli start --data hardware-mock.json --port 3001",
     "test": "jest"
   },
   "keywords": ["mockoon", "hardware-simulation", "umbrella-rental"],

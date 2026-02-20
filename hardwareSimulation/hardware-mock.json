@@ -12,7 +12,7 @@
         "statusCode": 200,
         "label": "Stations",
         "headers": [{"key": "Content-Type", "value": "application/json"}],
-        "body": "{\"stations\":[{\"stationId\":\"fuzzball_01\",\"location\":{\"latitude\":47.65569444,\"longitude\":-122.30880556},\"status\":\"operational\",\"capacity\":10,\"numUmbrellas\":7,\"availableSlots\":3},{\"stationId\":\"station-002\",\"location\":{\"latitude\":47.656,\"longitude\":-122.304},\"status\":\"operational\",\"capacity\":10,\"numUmbrellas\":5,\"availableSlots\":5}],\"totalStations\":2,\"timestamp\":\"\"}",
+        "body": "{\"stations\":[{\"stationId\":\"fuzzball_01\",\"location\":{\"latitude\":47.65569444,\"longitude\":-122.30880556},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"station-hub\",\"location\":{\"latitude\":47.656,\"longitude\":-122.304},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"fuzzball_02\",\"location\":{\"latitude\":47.655446,\"longitude\":-122.305722},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"station-003\",\"location\":{\"latitude\":47.6548,\"longitude\":-122.307},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"station-004\",\"location\":{\"latitude\":47.657,\"longitude\":-122.3065},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"station-005\",\"location\":{\"latitude\":47.6552,\"longitude\":-122.302},\"status\":\"operational\",\"capacity\":10}],\"totalStations\":6,\"timestamp\":\"\"}",
         "latency": 0,
         "bodyType": "INLINE",
         "filePath": "",

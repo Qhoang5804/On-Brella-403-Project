@@ -52,17 +52,7 @@ export async function getStations() {
  * @returns {Promise<{ success: boolean, rentalId: string, umbrellaId: string, startTime: string }>}
  */
 export async function startRental(stationId, slotNumber) {
-  // TODO: Remove this placeholder and use the real API call below for production.
-  // Beta placeholder: return fake 200 response when valid QR is scanned so timer can be tested.
-  const placeholderResponse = {
-    success: true,
-    rentalId: `rental-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    umbrellaId: `umbrella-${stationId}-${slotNumber}`,
-    startTime: new Date().toISOString(),
-  };
-  return Promise.resolve(placeholderResponse);
-
-  // return request("POST", "/api/rent", { stationId, slotNumber });
+  return request("POST", "/api/rent", { stationId, slotNumber });
 }
 
 /**

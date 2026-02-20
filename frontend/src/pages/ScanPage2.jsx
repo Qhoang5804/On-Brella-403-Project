@@ -1,58 +1,117 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { QrScanner } from "../components/QrScanner";
+import { useRental } from "../context/RentalContext";
+import { getAllStations } from "../utils/stationNames";
 
-// UI with QR code scanning
-export function ScanPage2({ isReturn = false, error = null }) {
-  const boxSize = 260;
-  const cornerSize = 48;
-  const cornerWidth = 4;
+const boxSize = 260;
+const cornerSize = 48;
+const cornerWidth = 4;
+
+// Parse QR content to { stationId, slotNumber }. Supports JSON or "id:slot" / "id-slot".
+function parseQrPayload(text) {
+  try {
+    const trimmed = (text || "").trim();
+    if (trimmed.startsWith("{")) {
+      const obj = JSON.parse(trimmed);
+      return {
+        stationId: obj.stationId || obj.station_id || "",
+        slotNumber:
+          typeof obj.slotNumber !== "undefined"
+            ? Number(obj.slotNumber)
+            : Number(obj.slot_number) || 0,
+      };
+    }
+    const parts = trimmed.split(/[:\-]/);
+    if (parts.length >= 2) {
+      return {
+        stationId: (parts[0] || "").trim(),
+        slotNumber: parseInt(parts[1], 10) || 0,
+      };
+    }
+    return { stationId: trimmed, slotNumber: 0 };
+  } catch {
+    return null;
+  }
+}
+
+export function ScanPage2({ error: propError = null }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { startRental, endRental, activeRental } = useRental();
+  const isReturn = location.pathname === "/scan/return";
 
   const [cameraError, setCameraError] = useState(null);
-  const [decodedText, setDecodedText] = useState(null);
+  const [status, setStatus] = useState("idle");
+  const [error, setError] = useState(null);
+  const [validStationIds, setValidStationIds] = useState(new Set());
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    getAllStations()
+      .then((stations) => setValidStationIds(new Set((stations || []).map((s) => s.stationId))))
+      .catch(() => setValidStationIds(new Set()));
+  }, []);
 
-  const shownError = cameraError || error;
+  const shownError = cameraError || propError || error;
 
-  const parseQrPayload = (text) => {
-    try {
-      const trimmed = (text || "").trim();
-      if (trimmed.startsWith("{")) {
-        const obj = JSON.parse(trimmed);
-        return {
-          stationId: obj.stationId || obj.station_id,
-          slotNumber:
-            typeof obj.slotNumber !== "undefined"
-              ? Number(obj.slotNumber)
-              : Number(obj.slot_number) || 0,
-        };
+  const handleScan = useCallback(
+    async (text) => {
+      if (!text || status === "loading") return;
+      const payload = parseQrPayload(text);
+      if (!payload) {
+        setError("Invalid QR code");
+        return;
       }
-      const parts = trimmed.split(/[:\-]/);
-      if (parts.length >= 2) {
-        return {
-          stationId: parts[0].trim(),
-          slotNumber: parseInt(parts[1], 10) || 0,
-        };
-      }
-      return { stationId: trimmed, slotNumber: 0 };
-    } catch {
-      return null;
-    }
-  };
 
-  const handleScan = (text) => {
-    if (!text) return;
-    const payload = parseQrPayload(text);
-    console.log("QR Code Scanned:", { rawText: text, parsed: payload });
-    setDecodedText(text);
-  };
+      if (isReturn) {
+        if (!activeRental) {
+          setError("No active rental to return");
+          return;
+        }
+        setError(null);
+        setStatus("loading");
+        try {
+          const stationId = payload.stationId || activeRental.stationId;
+          const slotNumber = payload.slotNumber ?? 0;
+          await endRental(stationId, slotNumber);
+          navigate("/thank-you", { replace: true });
+        } catch (e) {
+          setError(e?.message || "Failed to return umbrella");
+          setStatus("idle");
+        }
+        return;
+      }
+
+      // Rent flow: require a stationId that exists in our stations table (from API/DB).
+      const stationId = (payload.stationId || "").trim();
+      if (!stationId) {
+        setError("Invalid QR code: no station ID");
+        return;
+      }
+      if (validStationIds.size > 0 && !validStationIds.has(stationId)) {
+        setError("Station not found. Use a QR code from an On-Brella station.");
+        return;
+      }
+
+      setError(null);
+      setStatus("loading");
+      try {
+        await startRental(stationId, payload.slotNumber ?? 0);
+        navigate("/active", { replace: true });
+      } catch (e) {
+        setError(e?.message || "Could not start rental");
+        setStatus("idle");
+      }
+    },
+    [status, isReturn, activeRental, startRental, endRental, navigate, validStationIds]
+  );
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black text-white font-display flex flex-col">
-      {/* Full-screen QR scanner with camera */}
+      {/* Full-screen QR scanner with camera - only scans within the square */}
       <QrScanner
         fullScreen
+        qrboxSize={{ width: boxSize, height: boxSize }}
         onScan={handleScan}
         onError={(e) => setCameraError(e?.message || "Camera error")}
       />
@@ -140,7 +199,18 @@ export function ScanPage2({ isReturn = false, error = null }) {
         <div className="w-10" />
       </div>
 
-      {/* Error message (presentational only) */}
+      {/* Loading overlay (prevents double scan) */}
+      {status === "loading" && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70">
+          <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20">
+            <span className="text-white font-semibold">
+              {isReturn ? "Returning umbrella…" : "Starting rental…"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Error message */}
       {shownError && (
         <div className="absolute left-4 right-4 top-20 z-10">
           <p className="text-red-300 text-sm text-center bg-black/60 backdrop-blur px-4 py-2 rounded-xl border border-red-500/50">

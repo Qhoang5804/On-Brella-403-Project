@@ -1,8 +1,9 @@
 /**
  * App config. Open/closed: extend with new keys without changing consumers.
  */
+const devBackend = "http://localhost:5001";
 export const config = {
-  apiBaseUrl: import.meta.env.VITE_API_URL || "",
+  apiBaseUrl: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? devBackend : ""),
   sessionStorageKey: "onbrella_session_id",
   rentalStorageKey: "onbrella_active_rental",
   lastReturnStorageKey: "onbrella_last_return",

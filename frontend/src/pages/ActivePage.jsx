@@ -1,17 +1,31 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRental } from "../context/RentalContext";
 import { formatDurationFromStart } from "../utils/duration";
 import { getStationDisplayName } from "../utils/stationNames";
+import { StationMap } from "../components/StationMap";
+import * as api from "../api/client";
 
 export function ActivePage() {
   const navigate = useNavigate();
   const { activeRental, endRental } = useRental();
+  const mapRef = useRef(null);
+  const searchInputRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState("00:00:00");
+  const [stations, setStations] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchExpanded, setSearchExpanded] = useState(false);
 
   const hasValidRental = activeRental && typeof activeRental === "object" && activeRental.startTime;
+
+  // Access only during active rental: redirect if none
+  useEffect(() => {
+    if (!hasValidRental) {
+      navigate("/", { replace: true });
+    }
+  }, [hasValidRental, navigate]);
 
   useEffect(() => {
     if (!hasValidRental) return;
@@ -21,169 +35,174 @@ export function ActivePage() {
     return () => clearInterval(id);
   }, [hasValidRental, activeRental?.startTime]);
 
+  useEffect(() => {
+    api
+      .getStations()
+      .then((data) => setStations(data.stations || []))
+      .catch(() => setStations([]));
+  }, []);
+
+  const handleStationClick = useCallback((station) => {
+    const lat = station.location?.latitude;
+    const lng = station.location?.longitude;
+    if (lat != null && lng != null && mapRef.current?.setView) {
+      mapRef.current.setView([lat, lng]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (searchExpanded) searchInputRef.current?.focus();
+  }, [searchExpanded]);
+
+  const filteredStations = searchQuery.trim()
+    ? stations.filter(
+        (s) =>
+          getStationDisplayName(s.stationId).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (s.stationId || "").toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : stations;
+
+  const goToMyLocation = () => mapRef.current?.goToUser?.();
+
   if (!hasValidRental) {
-    return (
-      <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col">
-        <main className="flex-1 flex flex-col items-center justify-center px-6 pb-32">
-          <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-6">
-            <span className="material-icons text-4xl text-slate-400">umbrella</span>
-          </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white text-center">
-            No active rental
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 text-center max-w-xs">
-            Scan a QR code at a station to rent an umbrella, or go back to the map.
-          </p>
-          <div className="w-full max-w-sm mt-10 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <span className="material-icons text-xl">map</span>
-              View Map
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/scan")}
-              className="w-full bg-transparent border-2 border-primary text-primary hover:bg-primary/5 font-bold py-4 rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined text-xl">qr_code_scanner</span>
-              Scan to Rent
-            </button>
-          </div>
-        </main>
-      </div>
-    );
+    return null;
   }
 
-  const pickUpName = getStationDisplayName(activeRental.stationId);
-  const circumference = 2 * Math.PI * 90;
+  const circumference = 2 * Math.PI * 88;
   const elapsed = (Date.now() - new Date(activeRental.startTime).getTime()) / 1000;
   const maxSeconds = 24 * 3600;
   const progress = Math.min(1, elapsed / maxSeconds);
   const strokeDashoffset = circumference * (1 - progress);
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col">
-      <main className="flex-1 flex flex-col items-center px-6 pt-12 pb-32">
-        <div className="flex flex-col items-center mb-12 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/10 rounded-full mb-4">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
-            <span className="text-xs font-bold text-primary uppercase tracking-wider">
-              Rental Active
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-            Enjoy your journey!
-          </h1>
-        </div>
+    <div className="fixed inset-0 bg-background-light dark:bg-background-dark overflow-hidden h-screen w-full">
+      {/* Map background with stations (no availability, click = pan to station) */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-primary/10 pointer-events-none z-[1]" />
+        <StationMap
+          stations={filteredStations}
+          mapRef={mapRef}
+          simplified
+          onSelectStation={handleStationClick}
+        />
+      </div>
 
-        <div className="relative w-72 h-72 flex items-center justify-center mb-12">
-          <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 200 200">
-            <circle
-              className="text-slate-100 dark:text-slate-800"
-              cx="100"
-              cy="100"
-              fill="none"
-              r="90"
-              stroke="currentColor"
-              strokeWidth="8"
-            />
-            <circle
-              className="transition-all duration-1000 text-primary"
-              cx="100"
-              cy="100"
-              fill="none"
-              r="90"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="8"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              style={{ transformOrigin: "50% 50%" }}
-            />
-          </svg>
-          <div className="flex flex-col items-center z-10">
-            <span className="text-5xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-              {duration}
-            </span>
-            <span className="text-sm font-semibold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest">
-              Duration
-            </span>
-          </div>
-          <div className="absolute inset-4 rounded-full bg-primary/5 -z-10" />
-        </div>
-
-        <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary">tag</span>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-                  Umbrella ID
-                </p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">
-                  #{activeRental.umbrellaId?.replace("umbrella-", "") || "—"}
-                </p>
-              </div>
-            </div>
-            <div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-800" />
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary">location_on</span>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-                  Pick-up
-                </p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">{pickUpName}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="w-full max-w-sm mt-auto pb-6 pt-8 flex flex-col gap-3">
+      {/* Search and navigation (same as map page) */}
+      <div className="absolute top-4 right-4 z-20">
+        <div
+          className={`bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center border border-slate-100 dark:border-slate-700 transition-all duration-300 origin-right overflow-hidden ${
+            searchExpanded ? "w-80 px-3 py-2" : "w-12 h-12 p-2"
+          }`}
+        >
           <button
             type="button"
-            onClick={() => navigate("/")}
-            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            onClick={() => setSearchExpanded((s) => !s)}
+            className="flex items-center justify-center w-8 h-8 rounded-md"
+            aria-label="Open search"
           >
-            <span className="material-icons text-xl">map</span>
-            View Map
+            <span className="material-icons text-primary">search</span>
           </button>
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Search nearby..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onBlur={() => {
+              if (!searchQuery) setSearchExpanded(false);
+            }}
+            className={`bg-transparent border-none focus:outline-none focus:ring-0 ml-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 ${
+              searchExpanded ? "block w-full" : "hidden"
+            }`}
+          />
+        </div>
+      </div>
+      <div className="absolute top-20 right-4 z-20">
+        <button
+          type="button"
+          onClick={goToMyLocation}
+          className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform border border-slate-100 dark:border-slate-700"
+          aria-label="Center on my location"
+        >
+          <span className="material-icons text-primary">navigation</span>
+        </button>
+      </div>
+
+      {/* Bottom sheet - from provided design */}
+      <div className="fixed inset-x-0 bottom-0 z-50">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[32px] shadow-2xl px-6 pt-2 pb-12 border-t border-slate-200 dark:border-slate-800 relative">
+          <div className="flex justify-center mb-4">
+            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2" />
+          </div>
+          <div className="flex justify-center mb-4">
+            <div className="bg-blue-50 dark:bg-blue-900/30 text-primary text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+              Rental Active
+            </div>
+          </div>
+          <h2 className="text-center text-xl font-bold text-slate-900 dark:text-white mb-6">
+            Enjoy your journey!
+          </h2>
+          <div className="flex justify-center mb-8">
+            <div className="relative w-48 h-48 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border-8 border-slate-100 dark:border-slate-800" />
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 192 192">
+                <circle
+                  className="text-primary"
+                  cx="96"
+                  cy="96"
+                  fill="none"
+                  r="88"
+                  stroke="currentColor"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeWidth="8"
+                />
+              </svg>
+              <div
+                className="absolute top-0 w-4 h-4 bg-primary rounded-full border-4 border-white dark:border-slate-900 shadow-sm"
+                style={{ transform: "translateY(-4px)" }}
+              />
+              <div className="text-center z-10">
+                <div className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
+                  {duration}
+                </div>
+                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest uppercase mt-1">
+                  Duration
+                </div>
+              </div>
+            </div>
+          </div>
           <button
             type="button"
             onClick={async () => {
               if (status === "loading") return;
-              if (!activeRental) return;
               setError(null);
               setStatus("loading");
               try {
-                // End rental using original pickup station as fallback.
                 await endRental(activeRental.stationId, 0);
                 navigate("/thank-you", { replace: true });
               } catch (e) {
-                setError(e?.message || "Failed to end rental");
+                setError(e?.message || "Failed to return umbrella");
                 setStatus("idle");
               }
             }}
             disabled={status === "loading"}
-            className={`w-full ${status === "loading" ? "opacity-70 pointer-events-none" : ""} bg-transparent border-2 border-primary text-primary hover:bg-primary/5 font-bold py-4 rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2`}
+            className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"
           >
-            <span className="material-symbols-outlined text-xl">keyboard_return</span>
+            <span className="material-symbols-outlined rotate-180">keyboard_return</span>
             {status === "loading" ? "Returning…" : "Return Umbrella"}
           </button>
           {error && (
-            <p className="text-sm text-center text-red-500 mt-2">{error}</p>
+            <p className="text-sm text-center text-red-500 mt-3">{error}</p>
           )}
         </div>
-      </main>
+      </div>
+
+      {/* Top gradient bar */}
+      <div className="fixed top-0 left-0 right-0 h-12 bg-gradient-to-b from-black/20 to-transparent pointer-events-none z-[60]" />
+      {/* Bottom pill */}
+      <div className="fixed bottom-2 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-black/20 dark:bg-white/20 rounded-full z-[100] pointer-events-none" />
     </div>
   );
 }

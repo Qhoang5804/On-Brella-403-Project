@@ -70,6 +70,8 @@ export function StationMap({
   selectedStationId,
   onSelectStation,
   mapRef,
+  /** When true: markers are simple dots only (no availability badge, no popup). For active-rental map background. */
+  simplified = false,
 }) {
   const center = useMemo(
     () =>
@@ -94,7 +96,7 @@ export function StationMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <UserLocationMarker />
+        {!simplified && <UserLocationMarker />}
         <CenterOnUser mapRef={mapRef} />
         {stations.map((station) => {
           const lat = station.location?.latitude;
@@ -103,20 +105,26 @@ export function StationMap({
           const name = getStationDisplayName(station.stationId);
           const available = station.numUmbrellas ?? 0;
           const capacity = station.capacity ?? 0;
-          const emptySlots = (station.availableSlots ?? capacity) - available + (capacity - (station.numUmbrellas ?? 0));
           const isSelected = selectedStationId === station.stationId;
+          const dotSize = simplified ? 24 : 18;
           const markerIcon = L.divIcon({
             className: "station-marker border-0 bg-transparent",
-            html: `
+            html: simplified
+              ? `
+              <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
+                <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:#fff;border:3px solid #0da6f2;box-shadow:0 2px 8px rgba(0,0,0,0.25);"></div>
+              </div>
+            `
+              : `
               <div style="display:flex;flex-direction:column;align-items:center;">
-                <div style="background:#fff;color:#0f172a;font-weight:700;font-size:11px;padding:4px 8px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);margin-bottom:4px;border:1px solid #e2e8f0;">
+                <div style="background:#fff;color:#0f172a;font-weight:700;font-size:12px;padding:5px 10px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);margin-bottom:5px;border:1px solid #e2e8f0;">
                   ${available}/${capacity}
                 </div>
-                <div style="width:12px;height:12px;border-radius:50%;background:${isSelected ? "#0da6f2" : "#fff"};border:2px solid #0da6f2;box-shadow:0 2px 6px rgba(0,0,0,0.2);"></div>
+                <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${isSelected ? "#0da6f2" : "#fff"};border:3px solid #0da6f2;box-shadow:0 2px 8px rgba(0,0,0,0.25);"></div>
               </div>
             `,
-            iconSize: [60, 36],
-            iconAnchor: [30, 36],
+            iconSize: simplified ? [dotSize, dotSize] : [60, 42],
+            iconAnchor: simplified ? [dotSize / 2, dotSize / 2] : [30, 42],
           });
           return (
             <Marker
@@ -127,21 +135,23 @@ export function StationMap({
                 click: () => onSelectStation?.(station),
               }}
             >
-              <Popup>
-                <div className="text-sm">
-                  <div className="font-bold">{name}</div>
-                  <div className="text-slate-500">
-                    {available} available / {capacity} total · {station.availableSlots ?? 0} empty slots
+              {!simplified && (
+                <Popup>
+                  <div className="text-sm">
+                    <div className="font-bold">{name}</div>
+                    <div className="text-slate-500">
+                      {available} available / {capacity} total · {station.availableSlots ?? 0} empty slots
+                    </div>
+                    <button
+                      type="button"
+                      className="mt-2 text-primary font-semibold"
+                      onClick={() => onSelectStation?.(station)}
+                    >
+                      Rent here
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="mt-2 text-primary font-semibold"
-                    onClick={() => onSelectStation?.(station)}
-                  >
-                    Rent here
-                  </button>
-                </div>
-              </Popup>
+                </Popup>
+              )}
             </Marker>
           );
         })}

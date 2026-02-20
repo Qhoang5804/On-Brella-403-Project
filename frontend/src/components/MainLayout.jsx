@@ -3,7 +3,7 @@ import { BottomNav } from "./BottomNav";
 
 export function MainLayout({ children }) {
   const location = useLocation();
-  const hideNav = location.pathname.startsWith("/scan");
+  const hideNav = location.pathname.startsWith("/scan") || location.pathname === "/active";
 
   return (
     <div className="min-h-screen bg-background-dark font-display text-slate-900 dark:text-slate-100 flex flex-col">

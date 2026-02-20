@@ -12,11 +12,20 @@ let stationCachePromise = null;
 const fallbackNames = {
   "station-001": "Suzzallo Library Station",
   "station-002": "The HUB",
+  "station-003": "Kane Hall Station",
+  "station-004": "North Campus Station",
+  "station-005": "Red Square Station",
+  "fuzzball_01": "Suzzallo Library Station",
+  "station-hub": "The HUB",
+  "fuzzball_02": "The HUB South",
 };
 
 const fallbackAddresses = {
   "station-001": "411 Library Way, Seattle, WA 98195",
   "station-002": "HUB, Seattle, WA 98195",
+  "station-003": "Kane Hall, Seattle, WA 98195",
+  "station-004": "North Campus, Seattle, WA 98195",
+  "station-005": "Red Square, Seattle, WA 98195",
 };
 
 /**

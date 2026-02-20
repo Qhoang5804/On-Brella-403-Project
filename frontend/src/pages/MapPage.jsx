@@ -94,7 +94,7 @@ export function MapPage() {
             className="flex items-center justify-center w-8 h-8 rounded-md"
             aria-label="Open search"
           >
-            <span className="material-icons text-slate-700 dark:text-white">search</span>
+            <span className="material-icons text-primary">search</span>
           </button>
 
           <input

@@ -3,8 +3,9 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 /**
  * QR scanner wrapper. Uses html5-qrcode; loads dynamically so a failure doesn't crash the page.
  * fullScreen: camera fills viewport as background; otherwise constrained box.
+ * qrboxSize: optional size for qrbox when fullScreen is true (e.g., {width: 260, height: 260}).
  */
-export function QrScanner({ onScan, onError, fullScreen = false }) {
+export function QrScanner({ onScan, onError, fullScreen = false, qrboxSize = null }) {
   const containerRef = useRef(null);
   const elementId = "qr-reader-" + useId().replace(/:/g, "");
   const [loadError, setLoadError] = useState(null);
@@ -49,9 +50,32 @@ export function QrScanner({ onScan, onError, fullScreen = false }) {
         }
         scannerRef.current = scanner;
 
+        // Calculate qrbox: use custom size if provided, otherwise default behavior
+        let qrboxConfig;
+        if (fullScreen && qrboxSize) {
+          // Use a function to calculate qrbox based on video dimensions
+          // The qrbox will be centered automatically by html5-qrcode
+          qrboxConfig = (viewfinderWidth, viewfinderHeight) => {
+            // Calculate the size as a percentage of viewport, then apply to video
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const widthPercent = (qrboxSize.width / viewportWidth) * 100;
+            const heightPercent = (qrboxSize.height / viewportHeight) * 100;
+            // Use the average to maintain square aspect ratio
+            const avgPercent = (widthPercent + heightPercent) / 2;
+            const width = Math.floor((viewfinderWidth * avgPercent) / 100);
+            const height = Math.floor((viewfinderHeight * avgPercent) / 100);
+            return { width, height };
+          };
+        } else if (fullScreen) {
+          qrboxConfig = undefined;
+        } else {
+          qrboxConfig = { width: 250, height: 250 };
+        }
+
         await scanner.start(
           { facingMode: "environment" },
-          { fps: 5, qrbox: fullScreen ? undefined : { width: 250, height: 250 } },
+          { fps: 5, qrbox: qrboxConfig },
           (text) => handleSuccess(text),
           () => {}
         );
@@ -78,7 +102,7 @@ export function QrScanner({ onScan, onError, fullScreen = false }) {
         scanner.stop().catch(() => {});
       }
     };
-  }, [elementId, fullScreen, handleSuccess, onError]);
+  }, [elementId, fullScreen, qrboxSize, handleSuccess, onError]);
 
   if (loadError) {
     return (

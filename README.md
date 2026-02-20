@@ -118,7 +118,7 @@ Before building and running the system, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone < https://github.com/Qhoang5804/On-Brella-403-Project >
+git clone https://github.com/Qhoang5804/On-Brella-403-Project
 cd On-Brella-403-Project
 ```
 

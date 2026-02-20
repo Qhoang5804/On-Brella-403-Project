@@ -148,7 +148,7 @@ cp .env.example .env  # If .env.example exists, or create manually
 Edit `backend/.env` and set the following variables:
 
 ```env
-DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-1-[region].pooler.supabase.com:6543/postgres
 PORT=5001
 HARDWARE_URL=http://localhost:3000
 ```

@@ -21,15 +21,32 @@ export function QrScanner({ onScan, onError, fullScreen = false }) {
   useEffect(() => {
     let cancelled = false;
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      setLoadError("Container not ready");
+      return;
+    }
 
     async function init() {
       try {
-        const { Html5Qrcode } = await import("html5-qrcode");
+        let Html5Qrcode;
+        try {
+          const module = await import("html5-qrcode");
+          Html5Qrcode = module.Html5Qrcode;
+        } catch (importErr) {
+          throw new Error(`Failed to load QR scanner library: ${importErr.message}`);
+        }
+
         if (cancelled) return;
 
+        if (!Html5Qrcode) {
+          throw new Error("Html5Qrcode not available after import");
+        }
+
         const scanner = new Html5Qrcode(elementId);
-        if (cancelled) return;
+        if (cancelled) {
+          scanner.stop().catch(() => {});
+          return;
+        }
         scannerRef.current = scanner;
 
         await scanner.start(

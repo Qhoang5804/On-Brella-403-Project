@@ -6,7 +6,9 @@ import { getStationDisplayName } from "../utils/stationNames";
 
 export function ActivePage() {
   const navigate = useNavigate();
-  const { activeRental } = useRental();
+  const { activeRental, endRental } = useRental();
+  const [status, setStatus] = useState("idle");
+  const [error, setError] = useState(null);
   const [duration, setDuration] = useState("00:00:00");
 
   const hasValidRental = activeRental && typeof activeRental === "object" && activeRental.startTime;
@@ -157,12 +159,29 @@ export function ActivePage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/scan/return", { state: { mode: "return" } })}
-            className="w-full bg-transparent border-2 border-primary text-primary hover:bg-primary/5 font-bold py-4 rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            onClick={async () => {
+              if (status === "loading") return;
+              if (!activeRental) return;
+              setError(null);
+              setStatus("loading");
+              try {
+                // End rental using original pickup station as fallback.
+                await endRental(activeRental.stationId, 0);
+                navigate("/thank-you", { replace: true });
+              } catch (e) {
+                setError(e?.message || "Failed to end rental");
+                setStatus("idle");
+              }
+            }}
+            disabled={status === "loading"}
+            className={`w-full ${status === "loading" ? "opacity-70 pointer-events-none" : ""} bg-transparent border-2 border-primary text-primary hover:bg-primary/5 font-bold py-4 rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2`}
           >
             <span className="material-symbols-outlined text-xl">keyboard_return</span>
-            Return Umbrella
+            {status === "loading" ? "Returning…" : "Return Umbrella"}
           </button>
+          {error && (
+            <p className="text-sm text-center text-red-500 mt-2">{error}</p>
+          )}
         </div>
       </main>
     </div>

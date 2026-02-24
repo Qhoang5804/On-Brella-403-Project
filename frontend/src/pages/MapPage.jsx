@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import * as api from "../api/client";
 import { config } from "../config";
 import { getStationDisplayName } from "../utils/stationNames";
@@ -16,6 +16,15 @@ export function MapPage() {
   const searchInputRef = useRef(null);
   const [selectedStation, setSelectedStation] = useState(null);
   const mapRef = useRef(null);
+
+  const formatGeoError = (err) => {
+    if (!err) return "Unable to access your location.";
+    if (err.code === 1)
+      return "Location permission denied. Enable location access for this site to use navigation.";
+    if (err.code === 2) return "Location unavailable. Check GPS/network and try again.";
+    if (err.code === 3) return "Location request timed out. Try again.";
+    return err.message || "Unable to access your location.";
+  };
 
   const loadStations = useCallback(async () => {
     setLoading(true);
@@ -48,9 +57,32 @@ export function MapPage() {
     : stations;
 
   const goToScan = () => navigate("/scan", { state: { mode: "rent" } });
-  const goToMyLocation = () => mapRef.current?.goToUser?.();
+  const goToMyLocation = () => {
+    setError(null);
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported in this browser/device.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        mapRef.current?.setView?.([lat, lng]);
+      },
+      (err) => setError(formatGeoError(err)),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
+    );
+  };
   const centerNearestStation = () => {
-    if (!navigator.geolocation || !stations || stations.length === 0) return;
+    setError(null);
+    if (!stations || stations.length === 0) {
+      setError("No stations loaded yet.");
+      return;
+    }
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported in this browser/device.");
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude;
@@ -67,9 +99,14 @@ export function MapPage() {
             best = [slat, slng];
           }
         }
-        if (best) mapRef.current?.setView?.(best);
+        if (!best) {
+          setError("Couldn’t find any nearby stations with valid locations.");
+          return;
+        }
+        mapRef.current?.setView?.(best);
       },
-      () => {}
+      (err) => setError(formatGeoError(err)),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
     );
   };
 
@@ -81,6 +118,17 @@ export function MapPage() {
         onSelectStation={setSelectedStation}
         mapRef={mapRef}
       />
+
+      {/* Account button: top-left, elegant white circular */}
+      <div className="absolute top-4 left-4 z-20">
+        <Link
+          to="/profile"
+          className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform border border-slate-100 dark:border-slate-700 hover:shadow-xl"
+          aria-label="Account"
+        >
+          <span className="material-icons text-primary text-[22px]">person_outline</span>
+        </Link>
+      </div>
 
       <div className="absolute top-4 right-4 z-10">
         <div
@@ -118,8 +166,8 @@ export function MapPage() {
         )}
       </div>
 
-      {/* Scan and Find station (GPS) buttons above navbar; small padding between row and nav */}
-      <div className="fixed bottom-24 left-0 right-0 z-20 px-4 pb-3 flex gap-3">
+      {/* Find station and Scan buttons at bottom of screen */}
+      <div className="fixed bottom-6 left-0 right-0 z-20 px-4 flex gap-3">
         <button
           type="button"
           onClick={centerNearestStation}
@@ -140,8 +188,12 @@ export function MapPage() {
         </button>
       </div>
 
-      {/* Navigation arrow button below the search button (top-right) */}
-      <div className="absolute top-20 right-4 z-30">
+      {/* Navigation arrow: above Scan button, right-hand thumb zone; moves up when bottom sheet is open */}
+      <div
+        className={`fixed right-4 z-30 transition-[bottom] duration-300 ease-out ${
+          selectedStation ? "bottom-[52vh]" : "bottom-[8.5rem]"
+        }`}
+      >
         <button
           type="button"
           onClick={goToMyLocation}

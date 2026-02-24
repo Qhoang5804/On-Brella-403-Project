@@ -78,11 +78,29 @@ Returning an Umbrella:
 2. Once the umbrella is back in the station, the user may press the return button on the active page.
 3. When the return is successful, the user will be greeted with a thank you page and the amount of money charged for their trip (still a WIP).
 
----git
+---
 
 ## How to report a bug:
 
-1. 
+If you encounter a bug while using On-Brella, please report it through our [GitHub Issue Tracker](https://github.com/Qhoang5804/On-Brella-403-Project/issues).
+
+To submit a bug report:
+
+1. Navigate to the GitHub Issue Tracker link above.
+2. Click **New Issue**.
+3. Select the **Bug Report** template.
+4. Fill out all required fields.
+5. Click **Submit** to create the issue.
+
+To help our team solve the issue, include:
+
+- A clear and descriptive title
+- A detailed description of the problem
+- Step-by-step instructions to reproduce the issue
+
+---
 
 ### Known Bugs:
+
+- The "Thank You" page may not always appear after successfully returning an umbrella.
 

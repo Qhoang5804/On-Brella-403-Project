@@ -38,7 +38,8 @@ export function LoginForm({
       if (error) throw error
       // Update this route to redirect to an authenticated route. The user already has an active session.
       // window.location.assign("/protected")
-      navigate("/profile");
+      // navigate("/profile");
+      navigate("/", { replace: true })
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
@@ -61,7 +62,7 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="covered@on-brella.com"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)} />

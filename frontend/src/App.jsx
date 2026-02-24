@@ -9,6 +9,7 @@ import { ThankYouPage } from "./pages/ThankYouPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { preloadStationData } from "./utils/stationNames";
+import LoginPage from "./pages/Login";
 
 function App() {
   useEffect(() => {
@@ -19,6 +20,7 @@ function App() {
   return (
     <MainLayout>
       <Routes>
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<MapPage />} />
         <Route
           path="/scan"

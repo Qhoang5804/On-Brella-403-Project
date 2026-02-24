@@ -6,7 +6,6 @@ import { MapPage } from "./pages/MapPage";
 import ScanPage2 from "./pages/ScanPage2";
 import { ActivePage } from "./pages/ActivePage";
 import { ThankYouPage } from "./pages/ThankYouPage";
-import { HistoryPage } from "./pages/HistoryPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { preloadStationData } from "./utils/stationNames";
 
@@ -38,7 +37,7 @@ function App() {
         />
         <Route path="/active" element={<ActivePage />} />
         <Route path="/thank-you" element={<ThankYouPage />} />
-        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/history" element={<Navigate to="/profile" replace />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from "react-router-dom";
 
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -22,6 +23,7 @@ export function LoginForm({
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClient()
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -35,7 +37,8 @@ export function LoginForm({
       })
       if (error) throw error
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      window.location.assign("/protected")
+      // window.location.assign("/protected")
+      navigate("/profile");
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {

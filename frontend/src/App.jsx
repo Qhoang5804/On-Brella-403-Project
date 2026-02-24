@@ -10,6 +10,8 @@ import { HistoryPage } from "./pages/HistoryPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { preloadStationData } from "./utils/stationNames";
 import LoginPage from "./pages/Login";
+import SignUpPage from "./pages/SignUp";
+import ForgotPasswordPage from "./pages/ForgotPassword";
 
 function App() {
   useEffect(() => {
@@ -21,6 +23,8 @@ function App() {
     <MainLayout>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/sign-up" element={<SignUpPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/" element={<MapPage />} />
         <Route
           path="/scan"

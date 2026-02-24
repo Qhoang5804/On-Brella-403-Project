@@ -114,6 +114,7 @@ export function StationMap({
         className="h-full w-full"
         scrollWheelZoom
         zoomControl={false}
+        attributionControl={false}
       >
         <TileLayer attribution={tileConfig.attribution} url={tileConfig.url} />
         {!simplified && <UserLocationMarker />}

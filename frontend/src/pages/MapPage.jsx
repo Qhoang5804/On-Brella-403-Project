@@ -57,22 +57,7 @@ export function MapPage() {
     : stations;
 
   const goToScan = () => navigate("/scan", { state: { mode: "rent" } });
-  const goToMyLocation = () => {
-    setError(null);
-    if (!navigator.geolocation) {
-      setError("Geolocation is not supported in this browser/device.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        mapRef.current?.setView?.([lat, lng]);
-      },
-      (err) => setError(formatGeoError(err)),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
-    );
-  };
+  const goToMyLocation = () => mapRef.current?.goToUser?.();
   const centerNearestStation = () => {
     setError(null);
     if (!stations || stations.length === 0) {

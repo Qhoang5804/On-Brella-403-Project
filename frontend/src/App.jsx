@@ -82,18 +82,18 @@ function App() {
               } 
             />
             <Route 
-              path="/history" 
-              element={
-                <ProtectedRoute>
-                  <HistoryPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
               path="/profile" 
               element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile/history" 
+              element={
+                <ProtectedRoute>
+                  <HistoryPage />
                 </ProtectedRoute>
               } 
             />

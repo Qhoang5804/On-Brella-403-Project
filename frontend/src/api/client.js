@@ -71,4 +71,11 @@ export async function endRental(rentalId, stationId, slotNumber, umbrellaId) {
   });
 }
 
+/**
+ * @returns {Promise<{ rentals: Array<{ rentalId, stationId, returnStationId, startTime, endTime, ... }> }>}
+ */
+export async function getRentalHistory() {
+  return request("GET", "/api/history");
+}
+
 export { getSessionId };

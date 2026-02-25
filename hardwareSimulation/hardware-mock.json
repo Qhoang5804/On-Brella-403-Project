@@ -98,7 +98,7 @@
   "proxyReqHeaders": [],
   "proxyResHeaders": [],
   "data": [],
-  "port": 3000,
+  "port": 3001,
   "uuid": "9ccaad31-af6b-40d4-8891-58420fa17dc3",
   "lastMigration": 33,
   "endpointPrefix": "",

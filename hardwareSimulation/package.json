@@ -6,7 +6,8 @@
   "scripts": {
     "start": "npx @mockoon/cli start --data hardware-mock.json --port 3000",
     "start:3001": "npx @mockoon/cli start --data hardware-mock.json --port 3001",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "keywords": ["mockoon", "hardware-simulation", "umbrella-rental"],
   "author": "On-Brella Team",

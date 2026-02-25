@@ -49,7 +49,7 @@ No installation is needed. On-Brella is a web-based app that can be accessed on 
 2. Navigate to the On-Brella URL:
 3. Allow access to requested permissions (location and camera)
 
-The homepage will load from here, and users can begin renting and returning umbrellas.
+The homepage will load from here. Users can then make an account or login and begin renting and returning umbrellas.
 
 ---
 
@@ -69,8 +69,7 @@ Renting an Umbrella:
 1. Go to a physical On-Brella station location and locate the QR code displayed at the station.
 2. Open the On-Brella web application on your device.
 3. Select the “Scan” button on the homepage and use your device camera to scan the station’s QR code.
-4. Confirm the rental when prompted.
-5. Upon confirmation, the rental will begin and a timer will display the duration for the active rental.
+4. The rental will begin and a timer will display the duration for the active rental.
 
 Returning an Umbrella:
 

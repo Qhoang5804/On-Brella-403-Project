@@ -1,18 +1,12 @@
 /**
  * User Account Profile page. Placeholder user data; settings actions are no-op until backend/auth.
  * Profile picture can be set locally and is persisted in localStorage.
- * Rental history is loaded from the backend (completed rentals for current session).
  */
-import { useRef, useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { config } from "../config";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client"
-import * as api from "../api/client";
-import { useRental } from "../context/RentalContext";
-import { getStationDisplayName } from "../utils/stationNames";
-import { formatDurationShort } from "../utils/duration";
-import { formatCost, computeRentalCostCents } from "../utils/cost";
-
 
 const loadStoredProfileImage = () => {
   try {
@@ -21,21 +15,6 @@ const loadStoredProfileImage = () => {
     return null;
   }
 };
-
-/** Format rental date for history: "Today, Oct 24" or "Oct 22, 2023" */
-function formatHistoryDate(endTimeIso) {
-  if (!endTimeIso) return "";
-  const d = new Date(endTimeIso);
-  const today = new Date();
-  const isToday =
-    d.getDate() === today.getDate() &&
-    d.getMonth() === today.getMonth() &&
-    d.getFullYear() === today.getFullYear();
-  if (isToday) {
-    return `Today, ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
-  }
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
 
 export function ProfilePage() {
   // Placeholder until auth/user API exists
@@ -48,18 +27,6 @@ export function ProfilePage() {
 
   const [profileImageUrl, setProfileImageUrl] = useState(loadStoredProfileImage);
   const fileInputRef = useRef(null);
-  const [historyRentals, setHistoryRentals] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
-  const { lastReturnSummary } = useRental();
-
-
-  useEffect(() => {
-    api
-      .getRentalHistory()
-      .then((data) => setHistoryRentals(data.rentals || []))
-      .catch(() => setHistoryRentals([]))
-      .finally(() => setHistoryLoading(false));
-  }, []);
 
   const handleEditPhoto = () => {
     fileInputRef.current?.click();
@@ -117,10 +84,6 @@ export function ProfilePage() {
     }
   };
 
-  const handleRentalHistory = () => {
-    navigate("/profile/history");
-  };
-
   const menuItems = [
     {
       label: "Personal Information",
@@ -145,13 +108,6 @@ export function ProfilePage() {
       icon: "help",
       iconBg: "bg-purple-50 dark:bg-purple-900/20 text-purple-500",
       onClick: handleHelpSupport,
-    },
-    {
-      label: "Rental history",
-      sublabel: "View past rentals",
-      icon: "history",
-      iconBg: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
-      onClick: handleRentalHistory,
     },
   ];
 
@@ -194,7 +150,7 @@ export function ProfilePage() {
             <button
               type="button"
               onClick={handleEditPhoto}
-              className="absolute bottom-0 right-0 bg-primary text-white p-1 sm:p-1.5 rounded-full shadow-md border-2 border-white dark:border-slate-900 hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+              className="absolute bottom-0 right-0 bg-primary text-white p-1 sm:p-1.5 rounded-full shadow-md border-2 border-white dark:border-slate-900 hover:opacity-90 active:scale-95 transition-all"
               aria-label="Edit profile photo"
             >
               <span className="material-symbols-outlined text-xs sm:text-sm block">edit</span>
@@ -204,7 +160,7 @@ export function ProfilePage() {
             <button
               type="button"
               onClick={handleRemovePhoto}
-              className="text-sm text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 underline mb-1 cursor-pointer"
+              className="text-sm text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 underline mb-1"
             >
               Remove photo
             </button>
@@ -225,7 +181,7 @@ export function ProfilePage() {
                 key={item.label}
                 type="button"
                 onClick={item.onClick}
-                className={`w-full flex items-center justify-between p-3 sm:p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 transition-colors text-left cursor-pointer ${
+                className={`w-full flex items-center justify-between p-3 sm:p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 transition-colors ${
                   index < menuItems.length - 1
                     ? "border-b border-slate-100 dark:border-slate-800"
                     : ""
@@ -237,149 +193,34 @@ export function ProfilePage() {
                   >
                     <span className="material-symbols-outlined text-lg sm:text-xl">{item.icon}</span>
                   </div>
-                  <div className="min-w-0">
-                    <span className="font-semibold text-slate-900 dark:text-white truncate text-sm sm:text-base block">
-                      {item.label}
-                    </span>
-                    {item.sublabel && (
-                      <span className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm block truncate">
-                        {item.sublabel}
-                      </span>
-                    )}
-                  </div>
+                  <span className="font-semibold text-slate-900 dark:text-white text-left truncate text-sm sm:text-base">
+                    {item.label}
+                  </span>
                 </div>
                 <span className="material-symbols-outlined text-slate-400 flex-shrink-0 ml-2">chevron_right</span>
               </button>
             ))}
           </div>
 
-          {/* Recent rentals preview — full list on History page */}
-          <div className="space-y-4" id="rental-history">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Recent rentals</h2>
-              <button
-                type="button"
-                onClick={handleRentalHistory}
-                className="text-sm font-semibold text-primary hover:underline cursor-pointer"
-              >
-                See all
-              </button>
+          {/* Rental history (part of Account page) */}
+          <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-3 sm:gap-4 mb-3">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-xl sm:text-2xl">history</span>
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                Rental history
+              </h2>
             </div>
-            {historyLoading ? (
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 text-center text-slate-500 dark:text-slate-400 text-sm">
-                Loading history…
-              </div>
-            ) : (() => {
-              // Merge last return from context (sessionStorage) so user sees it even when API is empty or DB is down
-              const lastAsRental = lastReturnSummary
-                ? {
-                    rentalId: lastReturnSummary.rentalId,
-                    startTime: new Date(
-                      new Date(lastReturnSummary.endTime).getTime() - lastReturnSummary.durationMs
-                    ).toISOString(),
-                    endTime: lastReturnSummary.endTime,
-                    stationId: lastReturnSummary.pickUpStationId,
-                    returnStationId: lastReturnSummary.returnStationId,
-                  }
-                : null;
-              const fromApi = historyRentals.filter(
-                (r) => !lastReturnSummary || r.rentalId !== lastReturnSummary.rentalId
-              );
-              const displayRentals = lastAsRental ? [lastAsRental, ...fromApi] : fromApi;
-
-              if (displayRentals.length === 0) {
-                return (
-                  <button
-                    type="button"
-                    onClick={handleRentalHistory}
-                    className="w-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800 transition-colors cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl flex items-center justify-center">
-                        <span className="material-symbols-outlined text-xl">history</span>
-                      </div>
-                      <h3 className="font-bold text-slate-900 dark:text-white text-base group-hover:text-primary">
-                        Rental history
-                      </h3>
-                      <span className="material-symbols-outlined text-slate-400 ml-auto group-hover:text-primary">chevron_right</span>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">
-                      Your rental history will appear here. When you have completed rentals, they will show with duration, cost, and return location.
-                    </p>
-                    <p className="text-primary text-sm font-semibold mt-2">View history page →</p>
-                  </button>
-                );
-              }
-
-              return (
-              <div className="space-y-4">
-                {displayRentals.map((rental) => {
-                  const startMs = rental.startTime ? new Date(rental.startTime).getTime() : 0;
-                  const endMs = rental.endTime ? new Date(rental.endTime).getTime() : 0;
-                  const durationMs = Math.max(0, endMs - startMs);
-                  const costCents = computeRentalCostCents(durationMs);
-                  const pickupName = getStationDisplayName(rental.stationId);
-                  const returnName = getStationDisplayName(rental.returnStationId || rental.stationId);
-                  return (
-                    <div
-                      key={rental.rentalId}
-                      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
-                    >
-                      <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
-                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                          {formatHistoryDate(rental.endTime)}
-                        </span>
-                        <span className="text-sm font-bold text-primary">
-                          {formatCost(costCents)}
-                        </span>
-                      </div>
-                      <div className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="flex flex-col items-center gap-1 mt-1">
-                            <div className="w-2 h-2 rounded-full bg-primary" />
-                            <div className="w-0.5 h-8 bg-slate-200 dark:bg-slate-700" />
-                            <div className="w-2 h-2 rounded-full border-2 border-primary" />
-                          </div>
-                          <div className="flex-1 space-y-4">
-                            <div>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight">
-                                Picked up
-                              </p>
-                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                {pickupName}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight">
-                                Returned
-                              </p>
-                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                {returnName}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight">
-                              Duration
-                            </p>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white">
-                              {formatDurationShort(durationMs)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              );
-            })()}
+            <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">
+              Your rental history will appear here. When you have completed rentals, they will show with duration, cost, and return location.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={handleLogOut}
-            className="w-full bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/30 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-3 text-red-500 font-bold shadow-sm hover:bg-red-50 dark:hover:bg-red-900/10 active:scale-[0.98] transition-all text-sm sm:text-base cursor-pointer"
+            className="w-full bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/30 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-3 text-red-500 font-bold shadow-sm hover:bg-red-50 dark:hover:bg-red-900/10 active:scale-[0.98] transition-all text-sm sm:text-base"
           >
             <span className="material-symbols-outlined text-lg sm:text-xl">logout</span>
             Log Out

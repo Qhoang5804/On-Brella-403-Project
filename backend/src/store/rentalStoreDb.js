@@ -20,11 +20,11 @@ function _rowToRental(row) {
     sessionId: row.session_id,
     umbrellaId: row.umbrella_id,
     stationId: row.station_id,
-    slotNumber: row.slot_number ?? row.start_slot_number,
+    slotNumber: row.slot_number,
     startTime: row.start_time ? new Date(row.start_time).toISOString() : null,
     endTime: row.end_time ? new Date(row.end_time).toISOString() : null,
     returnStationId: row.return_station_id,
-    returnSlotNumber: row.return_slot_number ?? row.return_slot_num,
+    returnSlotNumber: row.return_slot_number,
     status: row.status,
   };
 }
@@ -89,27 +89,9 @@ async function getById(rentalId) {
   return rows[0] ? _rowToRental(rows[0]) : null;
 }
 
-/**
- * List completed rentals for a session (for history). Most recent first.
- * @param {string} sessionId
- * @param {number} [limit=50]
- * @returns {Promise<Array<object>>}
- */
-async function getCompletedBySession(sessionId, limit = 50) {
-  const { rows } = await db.query(
-    `SELECT * FROM rentals
-     WHERE session_id = $1 AND status = 'COMPLETED'
-     ORDER BY end_time DESC NULLS LAST
-     LIMIT $2`,
-    [sessionId, limit]
-  );
-  return rows.map((row) => _rowToRental(row));
-}
-
 module.exports = {
   create,
   complete,
   getActiveBySession,
   getById,
-  getCompletedBySession,
 };

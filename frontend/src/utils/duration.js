@@ -16,15 +16,3 @@ export function formatDurationFromStart(startTimeIso) {
   const now = Date.now();
   return formatDurationMs(now - start);
 }
-
-/**
- * Short label for rental history: "1h 20m", "45m", "22m".
- */
-export function formatDurationShort(ms) {
-  if (ms == null || ms < 0) return "0m";
-  const totalMinutes = Math.round(ms / 60000);
-  if (totalMinutes < 60) return `${totalMinutes}m`;
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  return m ? `${h}h ${m}m` : `${h}h`;
-}

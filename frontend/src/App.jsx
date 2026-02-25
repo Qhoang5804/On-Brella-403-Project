@@ -82,18 +82,18 @@ function App() {
               } 
             />
             <Route 
-              path="/profile" 
+              path="/history" 
               element={
                 <ProtectedRoute>
-                  <ProfilePage />
+                  <HistoryPage />
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/profile/history" 
+              path="/profile" 
               element={
                 <ProtectedRoute>
-                  <HistoryPage />
+                  <ProfilePage />
                 </ProtectedRoute>
               } 
             />

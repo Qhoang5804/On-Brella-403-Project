@@ -36,9 +36,6 @@ export function LoginForm({
         password,
       })
       if (error) throw error
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      // window.location.assign("/protected")
-      // navigate("/profile");
       navigate("/", { replace: true })
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')

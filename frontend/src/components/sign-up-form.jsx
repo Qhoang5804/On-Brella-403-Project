@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from "@/lib/supabase/client"
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -25,7 +25,6 @@ export function SignUpForm({
   const [success, setSuccess] = useState(false)
 
   const handleSignUp = async (e) => {
-    const supabase = createClient()
     e.preventDefault()
     setError(null)
 

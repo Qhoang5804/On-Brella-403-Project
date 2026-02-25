@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from "@/lib/supabase/client"
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -22,7 +22,6 @@ export function UpdatePasswordForm({
   const [isLoading, setIsLoading] = useState(false)
 
   const handleForgotPassword = async (e) => {
-    const supabase = createClient()
     e.preventDefault()
     setIsLoading(true)
     setError(null)

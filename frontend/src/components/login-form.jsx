@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from "react-router-dom";
 
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from "@/lib/supabase/client"
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -22,7 +22,6 @@ export function LoginForm({
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-  const supabase = createClient()
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {

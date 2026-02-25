@@ -20,6 +20,15 @@ export function ActivePage() {
 
   const hasValidRental = activeRental && typeof activeRental === "object" && activeRental.startTime;
 
+  const formatGeoError = (err) => {
+    if (!err) return "Unable to access your location.";
+    if (err.code === 1)
+      return "Location permission denied. Enable location access for this site to use navigation.";
+    if (err.code === 2) return "Location unavailable. Check GPS/network and try again.";
+    if (err.code === 3) return "Location request timed out. Try again.";
+    return err.message || "Unable to access your location.";
+  };
+
   // Access only during active rental: redirect if none
   useEffect(() => {
     if (!hasValidRental) {
@@ -62,7 +71,22 @@ export function ActivePage() {
       )
     : stations;
 
-  const goToMyLocation = () => mapRef.current?.goToUser?.();
+  const goToMyLocation = () => {
+    setError(null);
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported in this browser/device.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        mapRef.current?.setView?.([lat, lng]);
+      },
+      (err) => setError(formatGeoError(err)),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
+    );
+  };
 
   if (!hasValidRental) {
     return null;
@@ -117,7 +141,8 @@ export function ActivePage() {
           />
         </div>
       </div>
-      <div className="absolute top-20 right-4 z-20">
+      {/* Navigation arrow: same logic as Map page – bottom-right, above bottom sheet */}
+      <div className="fixed right-4 bottom-[52vh] z-30 transition-[bottom] duration-300 ease-out">
         <button
           type="button"
           onClick={goToMyLocation}

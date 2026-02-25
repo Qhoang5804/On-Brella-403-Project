@@ -20,32 +20,84 @@ function App() {
   }, []);
 
   return (
-    <MainLayout>
-      <Routes>
-        <Route path="/" element={<MapPage />} />
-        <Route
-          path="/scan"
-          element={
-            <ScanErrorBoundary>
-              <ScanPage2 />
-            </ScanErrorBoundary>
-          }
-        />
-        <Route
-          path="/scan/return"
-          element={
-            <ScanErrorBoundary>
-              <ScanPage2 />
-            </ScanErrorBoundary>
-          }
-        />
-        <Route path="/active" element={<ActivePage />} />
-        <Route path="/thank-you" element={<ThankYouPage />} />
-        <Route path="/history" element={<Navigate to="/profile" replace />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </MainLayout>
+    <Routes>
+    {/* Auth routes (no MainLayout) */}
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/sign-up" element={<SignUpPage />} />
+    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+    {/* App routes (wrapped in MainLayout) */}
+    <Route
+      path="/*"
+      element={
+        <MainLayout>
+          <Routes>
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <MapPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route
+              path="/scan"
+              element={
+                <ProtectedRoute>
+                  <ScanErrorBoundary>
+                    <ScanPage2 />
+                  </ScanErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scan/return"
+              element={
+                <ProtectedRoute>
+                  <ScanErrorBoundary>
+                    <ScanPage2 />
+                  </ScanErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/active" 
+              element={
+                <ProtectedRoute>
+                  <ActivePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/thank-you" 
+              element={
+                <ProtectedRoute>
+                  <ThankYouPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/history" 
+              element={
+                <ProtectedRoute>
+                  <HistoryPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </MainLayout>
+      }
+    />
+  </Routes>
   );
 }
 

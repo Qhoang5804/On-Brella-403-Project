@@ -8,6 +8,10 @@ import { ActivePage } from "./pages/ActivePage";
 import { ThankYouPage } from "./pages/ThankYouPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { preloadStationData } from "./utils/stationNames";
+import LoginPage from "./pages/Login";
+import SignUpPage from "./pages/SignUp";
+import ForgotPasswordPage from "./pages/ForgotPassword";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   useEffect(() => {

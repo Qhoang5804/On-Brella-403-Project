@@ -7,6 +7,8 @@ import ScanPage2 from "./pages/ScanPage2";
 import { ActivePage } from "./pages/ActivePage";
 import { ThankYouPage } from "./pages/ThankYouPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { PersonalInfoPage } from "./pages/PersonalInfoPage";
+import { UserProvider } from "./context/UserContext";
 import { preloadStationData } from "./utils/stationNames";
 import { HistoryPage } from "./pages/HistoryPage";
 import LoginPage from "./pages/Login";

@@ -480,3 +480,5 @@ The frontend uses Vite environment variables. Create `frontend/.env` if needed:
 * Abel Mitiku
 * Biniyam Gebreyohannes
 * Daniel Alemayehu
+
+Gamma Release

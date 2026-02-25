@@ -6,6 +6,11 @@
     "start": "npm run start --prefix backend",
     "test": "npm install --prefix backend && npm run test --prefix backend",
     "test:backend": "npm run test --prefix backend",
-    "test:hardware": "npm run test --prefix hardwareSimulation"
+    "test:hardware": "npm run test --prefix hardwareSimulation",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.68.1"
   }
 }

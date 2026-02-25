@@ -126,15 +126,65 @@ cd On-Brella-403-Project
 
 The backend requires a PostgreSQL database connection. We use Supabase for this:
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. In **Project Settings -- Database**, copy the **Connection string (URI)**
-   - Use **Transaction** mode
-   - Replace `[YOUR-PASSWORD]` with your database password
-3. Ensure your Supabase project has the required tables:
-   - `stations` - Umbrella station information
-   - `umbrellas` - Umbrella inventory
-   - `user` - User accounts
-   - `rentals` - Rental transaction records
+1. Create a project at [supabase.com](https://supabase.com).
+2. In your Supabase project, go to **Settings → Database**. Under **Connection info** (or **Connection string / URI**), copy the full **Postgres connection string (URI)**. This is the value you will paste into `DATABASE_URL`.  
+   - If the URI contains a placeholder password, replace it with your actual database password.  
+   - Use the standard Postgres connection string (not HTTP/REST) – it should start with `postgres://` or `postgresql://`.
+3. Ensure your Supabase project has the required tables and columns described below.
+
+#### Required tables and columns
+
+- **`stations`** – umbrella station information and availability  
+  | Column           | Type                | Notes                                      |
+  |------------------|---------------------|--------------------------------------------|
+  | `station_id`     | `text` (PK)         | Unique station identifier                  |
+  | `latitude`       | `double precision`  | Station latitude                           |
+  | `longitude`      | `double precision`  | Station longitude                          |
+  | `capacity`       | `integer`           | Total umbrella capacity at the station     |
+  | `num_brellas`    | `integer`           | Current number of umbrellas at the station |
+  | `status`         | `text`              | e.g. `operational`                         |
+
+- **`rentals`** – rental history and active rentals  
+  | Column               | Type               | Notes                                             |
+  |----------------------|--------------------|---------------------------------------------------|
+  | `rental_id`          | `text` (PK)        | Unique rental ID                                  |
+  | `session_id`         | `text`             | Session identifier (`X-Session-Id` or fallback)   |
+  | `umbrella_id`        | `text`             | Logical umbrella identifier                       |
+  | `station_id`         | `text`             | Origin station ID                                 |
+  | `slot_number`        | `integer`          | Slot at origin station                            |
+  | `start_time`         | `timestamp`        | Rental start time                                 |
+  | `end_time`           | `timestamp`        | Rental end time (nullable until completed)       |
+  | `return_station_id`  | `text`             | Station where umbrella was returned (nullable)    |
+  | `return_slot_number` | `integer`          | Slot at return station (nullable)                 |
+  | `status`             | `text`             | e.g. `ACTIVE`, `COMPLETED`                        |
+  | `created_at`         | `timestamp`        | Optional created-at timestamp                     |
+
+- **`umbrellas`** – umbrella inventory (basic schema, not heavily used by the backend)  
+  | Column        | Type   | Notes                         |
+  |---------------|--------|-------------------------------|
+  | `umbrella_id` | `text` | Primary key / umbrella ID     |
+  | `station_id`  | `text` | Current station (nullable)    |
+  | `status`      | `text` | e.g. `available`, `missing`   |
+
+- **`user`** – app users (optional for core rental flow, but useful for demos)  
+  | Column          | Type   | Notes                       |
+  |-----------------|--------|-----------------------------|
+  | `user_id`       | `uuid` | Primary key                 |
+  | `name`          | `text` | User display name           |
+  | `email`         | `text` | User email                  |
+  | `account_status`| `text` | e.g. `active`, `disabled`   |
+
+You can create these tables using the Supabase Table editor UI, or by running equivalent `CREATE TABLE` statements in the SQL editor. Rentals do **not** need seed data; they are created automatically when you use the app. For a working demo, create at least a few `stations` rows (matching the example IDs used by the hardware mock such as `station-001`, `station-002`, etc.).
+
+#### Example Supabase table views
+
+These screenshots show what the demo tables look like in Supabase:
+
+![Supabase rentals table](docs/images/supabase-rentals.png)
+
+![Supabase stations table](docs/images/supabase-stations.png)
+
+![Supabase user table](docs/images/supabase-user.png)
 
 ### 3. Environment Configuration
 
@@ -269,6 +319,16 @@ npm test
 
 **Note:** Frontend tests are currently minimal (placeholder).
 
+### How to Add New Tests
+
+- **Test harness:** Frontend, Backend and hardware simulation use **Jest**.
+- **Naming convention:** Name test files with the pattern `*.jest.test.js` (e.g. `myFeature.jest.test.js`). Jest is configured to match this pattern in `backend/jest.config.js` and `hardwareSimulation/jest.config.js`.
+- **Where to add tests:**
+  - Backend: add new test files in `backend/tests/`.
+  - Hardware simulation: add new test files in `hardwareSimulation/tests/`.
+  - Frontend: add tests in `frontend/tests/` (or as needed by your frontend test setup).
+- **Running your new tests:** From the component directory run `npm test`, or from the project root use `npm run test:backend` or `npm run test:hardware`. For hardware tests, ensure the hardware mock is running first (see Hardware Simulation Tests above).
+
 ### Running the Complete System
 
 The system requires three services to run simultaneously:
@@ -348,6 +408,30 @@ npm run preview
 ```
 
 This serves the optimized production build locally.
+
+## Building a Release
+
+Before creating a release:
+
+1. **Update versions**  
+   If the release includes a version bump, update the relevant version numbers (for example in `package.json` files and any referenced documentation) to reflect the new release.
+
+2. **Build the software**  
+   From the project root:
+   ```bash
+   make install
+   make build
+   ```
+   This installs dependencies and builds the frontend for production (output in `frontend/dist/`).
+
+3. **Run sanity checks**  
+   - Run the test suite: `make test` (or `npm test` from root).  
+   - Verify environment configuration: check `backend/.env` and `frontend/.env` (if used) for correct values for the target environment; never commit secrets.
+
+4. **Manual steps**  
+   - Tag the release in Git (for example `git tag vX.Y.Z`) and push tags.  
+   - Deploy the backend, frontend, and any supporting services using your chosen deployment platforms (e.g. Vercel, Render, Supabase).  
+   - In the target environment, start the required services (hardware simulation if applicable, backend, frontend) and perform a quick smoke test (e.g. health endpoint, basic user flows) to confirm the release is healthy.
 
 ## API Endpoints
 

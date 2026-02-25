@@ -13,6 +13,7 @@ import LoginPage from "./pages/Login";
 import SignUpPage from "./pages/SignUp";
 import ForgotPasswordPage from "./pages/ForgotPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
+import UpdatePasswordPage from "./pages/UpdatePassword";
 
 function App() {
   useEffect(() => {
@@ -33,6 +34,7 @@ function App() {
       element={
         <MainLayout>
           <Routes>
+            <Route path="/update-password" element={<UpdatePasswordPage />} />
             <Route 
               path="/" 
               element={

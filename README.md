@@ -290,6 +290,42 @@ npm run test:backend
 - `middleware.jest.test.js` - Validation and error handling
 - `api.jest.test.js` - Full API integration tests (mocked hardware and store)
 
+### Code Coverage
+
+We use **Jest's built-in coverage** tooling for the backend and hardware simulation only (the frontend is currently excluded from coverage).
+
+- **Run backend tests with coverage locally:**
+
+  ```bash
+  cd backend
+  npm run test:coverage
+  # Then open backend/coverage/lcov-report/index.html in a browser to inspect coverage
+  ```
+
+- **Run hardware simulation tests with coverage locally:**
+
+  ```bash
+  cd hardwareSimulation
+  npm run test:coverage
+  # Then open hardwareSimulation/coverage/lcov-report/index.html in a browser to inspect coverage
+  ```
+
+- **From the project root:**
+
+  ```bash
+  # Backend coverage
+  npm run test:coverage
+
+  # Hardware simulation coverage
+  npm run test:hardware:coverage
+  ```
+
+- **In CI (GitHub Actions):**
+  - The `CI` workflow runs `npm run test:coverage` (backend) and `npm run test:hardware:coverage` (hardware simulation) on every push and pull request to `main`.
+  - The generated coverage reports are uploaded as GitHub Actions artifacts:
+    - `backend-coverage` → contents of `backend/coverage/`
+    - `hardware-coverage` → contents of `hardwareSimulation/coverage/`
+
 #### Hardware Simulation Tests
 
 **Important:** The hardware mock must be running before tests.

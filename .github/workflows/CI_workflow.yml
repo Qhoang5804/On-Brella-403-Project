@@ -30,5 +30,20 @@ jobs:
           sleep 5
           curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/hardware/stations | grep -q 200 || (echo "Mock failed to start" && exit 1)
 
-      - name: Run all tests
-        run: npm test
+      - name: Run backend tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload backend coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+
+      - name: Run hardware simulation tests with coverage
+        run: npm run test:hardware:coverage
+
+      - name: Upload hardware simulation coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: hardware-coverage
+          path: hardwareSimulation/coverage

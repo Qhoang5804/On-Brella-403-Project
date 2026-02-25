@@ -5,6 +5,8 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { config } from "../config";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase/client"
 
 const loadStoredProfileImage = () => {
   try {
@@ -20,6 +22,8 @@ export function ProfilePage() {
     name: "Mr. Test",
     email: "test.me@email.com",
   };
+
+  const navigate = useNavigate();
 
   const [profileImageUrl, setProfileImageUrl] = useState(loadStoredProfileImage);
   const fileInputRef = useRef(null);
@@ -67,8 +71,17 @@ export function ProfilePage() {
     // TODO: navigate to help or open link
   };
 
-  const handleLogOut = () => {
-    // TODO: clear session / Clerk sign out when auth is wired
+  const handleLogOut = async () => {
+    try {
+      // Immediate UI response: move user to login right away
+      navigate("/login", { replace: true });
+
+      // Then sign out in the background
+      await supabase.auth.signOut();
+    } catch (e) {
+      // If something fails, at least user is off protected screens
+      console.error("Logout failed:", e);
+    }
   };
 
   const menuItems = [

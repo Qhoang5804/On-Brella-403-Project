@@ -24,3 +24,9 @@ Thumbs.db
 dist/
 build/
 *.tgz
+
+# Coverage output
+coverage/
+frontend/coverage
+backend/coverage
+hardwareSimulation/coverage

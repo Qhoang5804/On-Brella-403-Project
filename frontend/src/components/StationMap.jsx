@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import { config } from "../config";
-import { getStationDisplayName } from "../utils/stationNames";
 
 const defaultIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -84,25 +83,46 @@ export function StationMap({
     [stations]
   );
 
+  const tileConfig =
+    config.mapTheme === "dark"
+      ? {
+          url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        }
+      : config.mapTheme === "grayscale"
+        ? {
+            url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          }
+        : {
+            url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          };
+
+  const mapContainerClass =
+    config.mapTheme === "grayscale"
+      ? "absolute inset-0 z-0 map-theme-grayscale"
+      : "absolute inset-0 z-0";
+
   return (
-    <div className="absolute inset-0 z-0">
+    <div className={mapContainerClass}>
       <MapContainer
         center={center}
         zoom={config.defaultZoom}
         className="h-full w-full"
         scrollWheelZoom
+        zoomControl={false}
+        attributionControl={false}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <TileLayer attribution={tileConfig.attribution} url={tileConfig.url} />
         {!simplified && <UserLocationMarker />}
         <CenterOnUser mapRef={mapRef} />
         {stations.map((station) => {
           const lat = station.location?.latitude;
           const lng = station.location?.longitude;
           if (lat == null || lng == null) return null;
-          const name = getStationDisplayName(station.stationId);
           const available = station.numUmbrellas ?? 0;
           const capacity = station.capacity ?? 0;
           const isSelected = selectedStationId === station.stationId;
@@ -134,25 +154,7 @@ export function StationMap({
               eventHandlers={{
                 click: () => onSelectStation?.(station),
               }}
-            >
-              {!simplified && (
-                <Popup>
-                  <div className="text-sm">
-                    <div className="font-bold">{name}</div>
-                    <div className="text-slate-500">
-                      {available} available / {capacity} total · {station.availableSlots ?? 0} empty slots
-                    </div>
-                    <button
-                      type="button"
-                      className="mt-2 text-primary font-semibold"
-                      onClick={() => onSelectStation?.(station)}
-                    >
-                      Rent here
-                    </button>
-                  </div>
-                </Popup>
-              )}
-            </Marker>
+            />
           );
         })}
       </MapContainer>

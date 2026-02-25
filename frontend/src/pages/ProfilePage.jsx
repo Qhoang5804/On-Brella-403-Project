@@ -3,9 +3,8 @@
  * Profile picture can be set locally and is persisted in localStorage.
  */
 import { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { config } from "../config";
-import { useUser } from "../context/UserContext";
 
 const loadStoredProfileImage = () => {
   try {
@@ -16,8 +15,11 @@ const loadStoredProfileImage = () => {
 };
 
 export function ProfilePage() {
-  const navigate = useNavigate();
-  const { user } = useUser();
+  // Placeholder until auth/user API exists
+  const user = {
+    name: "Mr. Test",
+    email: "test.me@email.com",
+  };
 
   const [profileImageUrl, setProfileImageUrl] = useState(loadStoredProfileImage);
   const fileInputRef = useRef(null);
@@ -50,7 +52,7 @@ export function ProfilePage() {
   };
 
   const handlePersonalInfo = () => {
-    navigate("/personal-info");
+    // TODO: navigate to personal info or open modal
   };
 
   const handlePaymentMethods = () => {

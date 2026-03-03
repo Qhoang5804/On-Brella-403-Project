@@ -25,5 +25,8 @@ dist/
 build/
 *.tgz
 
-# Test coverage output
-**/coverage/
+# Coverage output
+coverage/
+frontend/coverage
+backend/coverage
+hardwareSimulation/coverage

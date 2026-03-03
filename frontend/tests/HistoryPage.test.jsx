@@ -18,7 +18,7 @@ describe("HistoryPage", () => {
     mockGetRentalHistory.mockReset();
   });
 
-  it("renders Back to map link and Rental History heading", () => {
+  it("renders Back to map link and Rental History heading", async () => {
     mockGetRentalHistory.mockResolvedValue({ rentals: [], total: 0, limit: 50, offset: 0 });
     render(
       <MemoryRouter>
@@ -27,6 +27,9 @@ describe("HistoryPage", () => {
     );
     expect(screen.getByText("Back to map")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Rental History/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading history…/)).not.toBeInTheDocument();
+    });
   });
 
   it("shows loading then empty state when no rentals", async () => {

@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:coverage": "vitest --coverage"
+
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.8",

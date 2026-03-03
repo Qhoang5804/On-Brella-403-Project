@@ -526,5 +526,6 @@ The frontend uses Vite environment variables. Create `frontend/.env` if needed:
 * Biniyam Gebreyohannes
 * Daniel Alemayehu
 
-## Gamma Release Tag
- * gamma_release
+
+## Gamma Release
+* gamma_release

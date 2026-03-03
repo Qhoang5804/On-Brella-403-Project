@@ -15,6 +15,11 @@ import LoginPage from "./pages/Login";
 import SignUpPage from "./pages/SignUp";
 import ForgotPasswordPage from "./pages/ForgotPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import { AdminLayout } from "./components/AdminLayout";
+import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
+import { AdminUsersPage } from "./pages/admin/AdminUsersPage";
+import { AdminReportsPage } from "./pages/admin/AdminReportsPage";
 import UpdatePasswordPage from "./pages/UpdatePassword";
 
 function App() {
@@ -29,6 +34,20 @@ function App() {
     <Route path="/login" element={<LoginPage />} />
     <Route path="/sign-up" element={<SignUpPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+    {/* Admin routes (AdminLayout, admin role required) */}
+    <Route
+      path="/admin"
+      element={
+        <AdminRoute>
+          <AdminLayout />
+        </AdminRoute>
+      }
+    >
+      <Route index element={<AdminDashboardPage />} />
+      <Route path="users" element={<AdminUsersPage />} />
+      <Route path="reports" element={<AdminReportsPage />} />
+    </Route>
 
     {/* App routes (wrapped in MainLayout) */}
     <Route

@@ -3,12 +3,20 @@
  *
  * On session change, fetches profile from Supabase (profiles table, or user table fallback).
  * Exposes: user, loading, error, updateUser (async, persists to Supabase), resetUser, refreshUser.
- * Profile fields: id, name, email, description, avatarUrl.
+ * Profile fields: id, name, email, description, avatarUrl, role ('user' | 'admin').
+ * Admin role: from profiles.role === 'admin' OR hardcoded admin email (config.adminEmail).
  */
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { config } from "@/config";
 
 const UserContext = createContext(null);
+
+/** True if email is the hardcoded admin email (case-insensitive). */
+function isAdminEmail(email) {
+  if (!email || !config.adminEmail) return false;
+  return email.trim().toLowerCase() === config.adminEmail.trim().toLowerCase();
+}
 
 /** Build app profile shape from Supabase auth user; prefers profiles table then user table. */
 async function fetchProfileForUser(authUser) {
@@ -32,12 +40,15 @@ async function fetchProfileForUser(authUser) {
 
     if (error) throw error;
 
+    const email = data.email || authEmail;
+    const role = data.role === "admin" || isAdminEmail(email) ? "admin" : "user";
     return {
       id: authId,
-      email: data.email || authEmail,
+      email,
       name: data.full_name || data.name || authName,
       description: data.bio || "",
       avatarUrl: data.avatar_url || null,
+      role,
     };
   } catch {
     // Fallback to `user` table shape described in README, if present
@@ -50,21 +61,26 @@ async function fetchProfileForUser(authUser) {
 
       if (error) throw error;
 
+      const email = data.email || authEmail;
+      const role = data.role === "admin" || isAdminEmail(email) ? "admin" : "user";
       return {
         id: authId,
-        email: data.email || authEmail,
+        email,
         name: data.name || authName,
         description: "",
         avatarUrl: data.avatar_url || null,
+        role,
       };
     } catch {
-      // Graceful fallback to auth-only identity
+      // Graceful fallback to auth-only identity (no profile row yet)
+      const role = isAdminEmail(authEmail) ? "admin" : "user";
       return {
         id: authId,
         email: authEmail,
         name: authName,
         description: "",
         avatarUrl: null,
+        role,
       };
     }
   }

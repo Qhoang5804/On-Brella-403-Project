@@ -22,6 +22,7 @@ src/
 |--------|------|-------------|
 | GET | /health | Health check |
 | GET | /api/stations | List stations (proxies to hardware) |
+| GET | /api/history | List completed rental history. Query: `?limit=&offset=`. Session: `X-Session-Id`. |
 | POST | /api/rent | Start rental. Body: `{ stationId, slotNumber }` |
 | POST | /api/return | End rental. Body: `{ rentalId, stationId, slotNumber, umbrellaId }` |
 

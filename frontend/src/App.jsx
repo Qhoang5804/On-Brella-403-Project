@@ -8,7 +8,7 @@ import { ActivePage } from "./pages/ActivePage";
 import { ThankYouPage } from "./pages/ThankYouPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { PersonalInfoPage } from "./pages/PersonalInfoPage";
-import { UserProvider } from "./context/UserContext";
+import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { preloadStationData } from "./utils/stationNames";
 import { HistoryPage } from "./pages/HistoryPage";
 import LoginPage from "./pages/Login";
@@ -89,13 +89,45 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={
                 <ProtectedRoute>
                   <ProfilePage />
                 </ProtectedRoute>
-              } 
+              }
+            />
+            <Route
+              path="/profile/personal-info"
+              element={
+                <ProtectedRoute>
+                  <PersonalInfoPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/payment-methods"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage title="Payment Methods" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/notifications"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage title="Notification Settings" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/help"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage title="Help & Support" />
+                </ProtectedRoute>
+              }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

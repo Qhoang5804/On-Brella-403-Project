@@ -11,7 +11,7 @@ Link to living document: https://docs.google.com/document/d/1LU65YB4aleQ35Zhabvx
 ### Key features:
 * Users are able to generate an account to rent out umbrellas at stations.
 * A map will display to users where nearby umbrella stations are.
-* Users are able to view their rental history, including fee and rental duration.
+* Users are able to view their rental history, including fee and rental duration (see [Profile & history](docs/profile-and-history.md)).
 * Stations are tracking the number of umbrellas remaining and the status umbrellas via code or sensor.
 
 ## Toolset
@@ -292,7 +292,7 @@ npm run test:backend
 
 ### Code Coverage
 
-We use **Jest's built-in coverage** tooling for the backend and hardware simulation only (the frontend is currently excluded from coverage).
+We use **Jest's built-in coverage** tooling for the backend and hardware simulation, and **Vitest coverage** for the frontend.
 
 - **Run backend tests with coverage locally:**
 
@@ -318,6 +318,14 @@ We use **Jest's built-in coverage** tooling for the backend and hardware simulat
 
   # Hardware simulation coverage
   npm run test:hardware:coverage
+  ```
+
+- **Run frontend tests with coverage locally:**
+
+  ```bash
+  cd frontend
+  npm run test:coverage
+  # Then open frontend/coverage/lcov-report/index.html in a browser to inspect coverage
   ```
 
 - **In CI (GitHub Actions):**
@@ -477,10 +485,11 @@ Before creating a release:
 |--------|------|-------------|
 | GET | `/health` | Health check endpoint |
 | GET | `/api/stations` | List all umbrella stations |
+| GET | `/api/history` | List completed rental history for the session. Query: `?limit=&offset=`. Header: `X-Session-Id`. |
 | POST | `/api/rent` | Start a rental. Body: `{ stationId, slotNumber }` |
 | POST | `/api/return` | End a rental. Body: `{ rentalId, stationId, slotNumber, umbrellaId }` |
 
-**Session Management:** Use `X-Session-Id` header or include `sessionId` in the request body. Defaults to `guest` if not provided.
+**Session Management:** Use `X-Session-Id` header or include `sessionId` in the request body. Defaults to `guest` if not provided. Rent, return, and history all use the same session so completed rentals appear on the History page when using the same browser tab.
 
 ### Hardware Mock API (Port 3000)
 
@@ -506,7 +515,7 @@ The frontend uses Vite environment variables. Create `frontend/.env` if needed:
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_URL` | Backend API URL (defaults to `http://localhost:5001` in dev) |
+| `VITE_API_URL` | Backend API base URL. Leave unset in dev to use the Vite proxy (`/api` → backend); set only when the frontend must call a different host (e.g. production API). See [Profile & history](docs/profile-and-history.md) for details. |
 
 ## Authors
 
@@ -517,5 +526,6 @@ The frontend uses Vite environment variables. Create `frontend/.env` if needed:
 * Biniyam Gebreyohannes
 * Daniel Alemayehu
 
+
 ## Gamma Release
-* gamma_release 
+* gamma_release

@@ -1,9 +1,10 @@
 /**
  * App config. Open/closed: extend with new keys without changing consumers.
+ * Use relative API URL (empty) so the Vite dev proxy forwards /api to the backend.
+ * Set VITE_API_URL only when you need a specific backend URL (e.g. production).
  */
-const devBackend = "http://localhost:5001";
 export const config = {
-  apiBaseUrl: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? devBackend : ""),
+  apiBaseUrl: import.meta.env.VITE_API_URL || "",
   sessionStorageKey: "onbrella_session_id",
   rentalStorageKey: "onbrella_active_rental",
   lastReturnStorageKey: "onbrella_last_return",
@@ -21,4 +22,8 @@ export const config = {
   /** Pricing display (extensible: could come from API later) */
   unlockFeeCents: 100,
   centsPerMinute: 10,
+  /** Max profile image size (bytes). Default 5MB. */
+  maxAvatarSizeBytes: 5 * 1024 * 1024,
+  /** Allowed avatar MIME types */
+  allowedAvatarTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
 };

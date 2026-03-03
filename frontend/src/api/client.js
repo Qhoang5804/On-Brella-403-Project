@@ -1,10 +1,17 @@
 /**
  * API client for On-Brella backend. Single implementation; swap for mock in tests.
+ *
+ * All requests send X-Session-Id so rent, return, and history use the same session.
+ * Session is stored in sessionStorage (key from config); same tab = same session.
  */
 import { config } from "../config";
 
 const base = config.apiBaseUrl || "";
 
+/**
+ * Get or create the current session ID (persisted in sessionStorage).
+ * Used by the backend to group rentals and history per browser session.
+ */
 function getSessionId() {
   try {
     let sid = sessionStorage.getItem(config.sessionStorageKey);
@@ -18,6 +25,10 @@ function getSessionId() {
   }
 }
 
+/**
+ * Send a request to the backend. Adds X-Session-Id and JSON content type.
+ * Throws an Error with .status and .payload on non-OK response.
+ */
 async function request(method, path, body = null) {
   const url = `${base}${path}`;
   const headers = {
@@ -69,6 +80,25 @@ export async function endRental(rentalId, stationId, slotNumber, umbrellaId) {
     slotNumber,
     umbrellaId,
   });
+}
+
+/**
+ * Fetch paginated rental history for the current session.
+ * @param {object} options
+ * @param {number} [options.limit=20]
+ * @param {number} [options.offset=0]
+ * @returns {Promise<{ rentals: Array, total: number, limit: number, offset: number }>}
+ */
+export async function getRentalHistory({ limit = 20, offset = 0 } = {}) {
+  const params = new URLSearchParams();
+  if (limit != null) params.set("limit", String(limit));
+  if (offset) params.set("offset", String(offset));
+
+  const path = params.toString()
+    ? `/api/history?${params.toString()}`
+    : "/api/history";
+
+  return request("GET", path);
 }
 
 export { getSessionId };

@@ -18,4 +18,15 @@ export default defineConfig({
       },
     },
   },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./tests/setupTests.js",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov", "html"],
+      reportsDirectory: "coverage",
+      include: ["src/**/*.{js,jsx,ts,tsx}"],
+    },
+  },
 });

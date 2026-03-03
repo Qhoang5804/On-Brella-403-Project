@@ -89,9 +89,47 @@ async function getById(rentalId) {
   return rows[0] ? _rowToRental(rows[0]) : null;
 }
 
+/**
+ * List completed rentals for a session, most recent first.
+ * @param {string} sessionId
+ * @param {object} options
+ * @param {number} [options.limit=20]
+ * @param {number} [options.offset=0]
+ * @returns {Promise<Array<object>>}
+ */
+async function listBySession(sessionId, { limit = 20, offset = 0 } = {}) {
+  const safeLimit = Number.isFinite(limit) && limit > 0 && limit <= 100 ? limit : 20;
+  const safeOffset = Number.isFinite(offset) && offset >= 0 ? offset : 0;
+
+  const { rows } = await db.query(
+    `SELECT * FROM rentals
+     WHERE session_id = $1 AND status = 'COMPLETED'
+     ORDER BY start_time DESC
+     LIMIT $2 OFFSET $3`,
+    [sessionId, safeLimit, safeOffset]
+  );
+
+  return rows.map(_rowToRental);
+}
+
+/**
+ * Count rentals for a session. Useful for pagination.
+ * @param {string} sessionId
+ * @returns {Promise<number>}
+ */
+async function countBySession(sessionId) {
+  const { rows } = await db.query(
+    `SELECT COUNT(*)::int AS count FROM rentals WHERE session_id = $1`,
+    [sessionId]
+  );
+  return rows[0]?.count ?? 0;
+}
+
 module.exports = {
   create,
   complete,
   getActiveBySession,
   getById,
+  listBySession,
+  countBySession,
 };

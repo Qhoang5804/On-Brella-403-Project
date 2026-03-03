@@ -158,3 +158,12 @@ Return an umbrella to a station (end rental).
 ## Integration
 
 The On-Brella backend calls these endpoints when users rent or return umbrellas. Point the backend at `http://localhost:3000` (or `HARDWARE_URL`) when the mock is running.
+
+### Relationship to Supabase
+
+- `hardware-mock.json` is **purely a mock** of the hardware API; it does **not** read from or write to Supabase.
+- Supabase (Postgres) is the **system of record** for stations, rentals, and history.
+- The **backend** is the glue:
+  - It calls the hardware mock (`/hardware/stations`, `/hardware/unlock`, `/hardware/return`) to simulate physical behavior.
+  - It then persists or updates the resulting state in Supabase tables (for example, creating/updating rows in `rentals` and `stations`).
+- The hardware mock and Supabase **never sync directly with each other**; all coordination flows through the backend.

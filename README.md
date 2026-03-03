@@ -188,14 +188,16 @@ These screenshots show what the demo tables look like in Supabase:
 
 ### 3. Environment Configuration
 
-Create a `.env` file in the `backend/` directory:
+#### Backend `.env`
+
+Create a `.env` file in the `backend/` directory (or copy the example file):
 
 ```bash
 cd backend
-cp .env.example .env  # If .env.example exists, or create manually
+cp .env.example .env
 ```
 
-Edit `backend/.env` and set the following variables:
+Edit `backend/.env` and set at least the following variables:
 
 ```env
 DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-1-[region].pooler.supabase.com:6543/postgres
@@ -203,7 +205,40 @@ PORT=5001
 HARDWARE_URL=http://localhost:3000
 ```
 
-**Note:** The `DATABASE_URL` is required for the backend to function properly.
+- **`DATABASE_URL` connection string type:** In Supabase, go to **Project Settings → Database → Connection string (URI)** and copy the **Postgres connection string using the connection pooler in Transaction mode** (it should start with `postgres://` or `postgresql://`). Do **not** use the HTTP/REST API URL or the service role key here.
+- **Required:** The `DATABASE_URL` must be set correctly for the backend to start and for `/health` to report `"database": "connected"`.
+
+#### Frontend `.env`
+
+The frontend also needs its own `.env` file. If this is missing or misconfigured, the app can render as a **blank white screen** with no obvious errors in the browser console or Network tab.
+
+Create a `.env` file in the `frontend/` directory:
+
+```bash
+cd frontend
+cp .env.example .env
+```
+
+Then edit `frontend/.env` and set:
+
+```env
+# Required for Supabase auth/profile features
+VITE_SUPABASE_URL=your-project-url
+VITE_SUPABASE_PUBLISHABLE_KEY=your-public-anon-key-here
+
+# Optional: override backend API URL
+VITE_API_URL=http://localhost:5001
+
+# Optional: override default admin email (see docs/admin-setup.md)
+VITE_ADMIN_EMAIL=admin@onbrella.com
+```
+
+- **`VITE_SUPABASE_URL`**: From Supabase **Project Settings → API → Project URL**.
+- **`VITE_SUPABASE_PUBLISHABLE_KEY`**: From Supabase **Project Settings → API → `anon` public key**. Do **not** use the `service_role` key here.
+- **`VITE_API_URL`**: Optional in development; you can leave it unset to rely on the Vite dev proxy if configured.
+- **`VITE_ADMIN_EMAIL`**: Optional override matching the admin email used for login; see `docs/admin-setup.md` for details.
+
+If `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY` are missing or incorrect, the frontend may fail silently and show a white screen even though the Network tab looks clean.
 
 ## Build Instructions
 
@@ -511,11 +546,14 @@ Before creating a release:
 
 ### Frontend
 
-The frontend uses Vite environment variables. Create `frontend/.env` if needed:
+The frontend uses Vite environment variables. Create `frontend/.env` as described in **Step 3 – Environment Configuration**:
 
 | Variable | Description |
 |----------|-------------|
+| `VITE_SUPABASE_URL` | Supabase project URL (from Project Settings → API → Project URL). Required for login/profile flows. |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase public `anon` key (from Project Settings → API). Required for Supabase client access; **do not** use the `service_role` key. |
 | `VITE_API_URL` | Backend API base URL. Leave unset in dev to use the Vite proxy (`/api` → backend); set only when the frontend must call a different host (e.g. production API). See [Profile & history](docs/profile-and-history.md) for details. |
+| `VITE_ADMIN_EMAIL` | Optional override for the admin email used by the frontend; see `docs/admin-setup.md` for details. |
 
 ## Authors
 

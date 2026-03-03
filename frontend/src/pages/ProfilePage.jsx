@@ -88,12 +88,23 @@ export function ProfilePage() {
   const handleNotificationSettings = () => navigate("/profile/notifications");
   const handleHelpSupport = () => navigate("/profile/help");
 
+  const handleAdmin = () => navigate("/admin");
+
   const menuItems = [
     { label: "Personal Information", icon: "person", iconBg: "bg-blue-50 dark:bg-blue-900/20 text-blue-500", onClick: handlePersonalInfo },
     { label: "Payment Methods", icon: "payments", iconBg: "bg-green-50 dark:bg-green-900/20 text-green-500", onClick: handlePaymentMethods },
     { label: "Notification Settings", icon: "notifications", iconBg: "bg-amber-50 dark:bg-amber-900/20 text-amber-500", onClick: handleNotificationSettings },
     { label: "Help & Support", icon: "help", iconBg: "bg-purple-50 dark:bg-purple-900/20 text-purple-500", onClick: handleHelpSupport },
   ];
+
+  if (user?.role === "admin") {
+    menuItems.unshift({
+      label: "Admin",
+      icon: "admin_panel_settings",
+      iconBg: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300",
+      onClick: handleAdmin,
+    });
+  }
 
   if (loading) {
     return (

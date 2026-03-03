@@ -26,4 +26,9 @@ export const config = {
   maxAvatarSizeBytes: 5 * 1024 * 1024,
   /** Allowed avatar MIME types */
   allowedAvatarTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+  /**
+   * Hardcoded admin email for admin-only UI/API access (no DB role required).
+   * Override with VITE_ADMIN_EMAIL. Compare case-insensitively.
+   */
+  adminEmail: import.meta.env.VITE_ADMIN_EMAIL || "admin@onbrella.com",
 };

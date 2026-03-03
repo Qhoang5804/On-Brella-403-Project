@@ -125,6 +125,17 @@ async function countBySession(sessionId) {
   return rows[0]?.count ?? 0;
 }
 
+/**
+ * Count all active (in-progress) rentals across all sessions. For admin dashboard.
+ * @returns {Promise<number>}
+ */
+async function countActiveRentals() {
+  const { rows } = await db.query(
+    `SELECT COUNT(*)::int AS count FROM rentals WHERE status = 'ACTIVE'`
+  );
+  return rows[0]?.count ?? 0;
+}
+
 module.exports = {
   create,
   complete,
@@ -132,4 +143,5 @@ module.exports = {
   getById,
   listBySession,
   countBySession,
+  countActiveRentals,
 };

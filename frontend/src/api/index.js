@@ -7,3 +7,5 @@ export {
   endRental,
   getSessionId,
 } from "./client";
+
+export { getRentalHistory } from "./client";

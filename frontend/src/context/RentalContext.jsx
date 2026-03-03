@@ -97,6 +97,13 @@ export function RentalProvider({ children }) {
     setActiveRental(stored);
   }, []);
 
+  const clearRentalState = useCallback(() => {
+    setActiveRental(null);
+    setLastReturnSummary(null);
+    saveRental(null);
+    saveLastReturn(null);
+  }, []);
+
   const value = useMemo(
     () => ({
       activeRental,
@@ -105,10 +112,11 @@ export function RentalProvider({ children }) {
         setLastReturnSummary(null);
         saveLastReturn(null);
       },
+      clearRentalState,
       startRental,
       endRental,
     }),
-    [activeRental, lastReturnSummary, startRental, endRental]
+    [activeRental, lastReturnSummary, clearRentalState, startRental, endRental]
   );
 
   return <RentalContext.Provider value={value}>{children}</RentalContext.Provider>;

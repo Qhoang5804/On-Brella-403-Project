@@ -24,3 +24,6 @@ Thumbs.db
 dist/
 build/
 *.tgz
+
+# Test coverage output
+**/coverage/

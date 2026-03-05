@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRental } from "../context/RentalContext";
 import { formatDurationFromStart } from "../utils/duration";
-import { getStationDisplayName } from "../utils/stationNames";
+import { getStationDisplayName, getStationAddress } from "../utils/stationNames";
 import { StationMap } from "../components/StationMap";
 import * as api from "../api/client";
 
@@ -67,7 +67,8 @@ export function ActivePage() {
     ? stations.filter(
         (s) =>
           getStationDisplayName(s.stationId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (s.stationId || "").toLowerCase().includes(searchQuery.toLowerCase())
+          (s.stationId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (getStationAddress(s.stationId) || "").toLowerCase().includes(searchQuery.toLowerCase())
       )
     : stations;
 
@@ -129,7 +130,7 @@ export function ActivePage() {
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Search nearby..."
+            placeholder="Search by station name or address"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onBlur={() => {

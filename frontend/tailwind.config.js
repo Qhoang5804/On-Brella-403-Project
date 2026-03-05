@@ -11,6 +11,10 @@ export default {
   			},
   			'background-light': '#f5f7f8',
   			'background-dark': '#101c22',
+  			// Admin / UW theme (inspiration)
+  			'uw-primary': '#4b2e83',
+  			'uw-secondary': '#b7a57a',
+  			'sidebar-bg': '#1e293b',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

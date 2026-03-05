@@ -11,6 +11,7 @@ export function QrScanner({ onScan, onError, fullScreen = false, qrboxSize = nul
   const [loadError, setLoadError] = useState(null);
   const [starting, setStarting] = useState(true);
   const scannerRef = useRef(null);
+  const scannerRunningRef = useRef(false);
 
   const handleSuccess = useCallback(
     (decodedText) => {
@@ -44,11 +45,8 @@ export function QrScanner({ onScan, onError, fullScreen = false, qrboxSize = nul
         }
 
         const scanner = new Html5Qrcode(elementId);
-        if (cancelled) {
-          scanner.stop().catch(() => {});
-          return;
-        }
         scannerRef.current = scanner;
+        if (cancelled) return;
 
         // Calculate qrbox: use custom size if provided, otherwise default behavior
         let qrboxConfig;
@@ -80,8 +78,13 @@ export function QrScanner({ onScan, onError, fullScreen = false, qrboxSize = nul
           () => {}
         );
         if (cancelled) {
-          scanner.stop().catch(() => {});
+          try {
+            await scanner.stop().catch(() => {});
+          } catch {
+            // ignore: scanner may not be in runnable state
+          }
         } else {
+          scannerRunningRef.current = true;
           setStarting(false);
         }
       } catch (err) {
@@ -97,9 +100,15 @@ export function QrScanner({ onScan, onError, fullScreen = false, qrboxSize = nul
     return () => {
       cancelled = true;
       const scanner = scannerRef.current;
+      const wasRunning = scannerRunningRef.current;
       scannerRef.current = null;
-      if (scanner && typeof scanner.stop === "function") {
-        scanner.stop().catch(() => {});
+      scannerRunningRef.current = false;
+      if (scanner && typeof scanner.stop === "function" && wasRunning) {
+        try {
+          scanner.stop().catch(() => {});
+        } catch {
+          // "Cannot stop, scanner is not running or paused" when unmount before start() finished
+        }
       }
     };
   }, [elementId, fullScreen, qrboxSize, handleSuccess, onError]);

@@ -46,7 +46,7 @@ No installation is needed. On-Brella is a web-based app that can be accessed on 
 ## How to Run On-Brella
 
 1. Open a supported web browser.
-2. Navigate to the On-Brella URL:
+2. Navigate to the On-Brella URL: [Placeholder]
 3. Allow access to requested permissions (location and camera)
 
 The homepage will load from here. Users can then make an account or login and begin renting and returning umbrellas.

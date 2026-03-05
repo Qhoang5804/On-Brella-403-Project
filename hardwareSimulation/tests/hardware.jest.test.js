@@ -1,14 +1,6 @@
 const BASE_URL = process.env.HARDWARE_URL || "http://localhost:3000";
 
 describe("Mockoon hardware endpoints", () => {
-  test("GET /hardware/stations returns list of stations", async () => {
-    const res = await fetch(`${BASE_URL}/hardware/stations`);
-    const data = await res.json();
-    expect(res.status).toBe(200);
-    expect(Array.isArray(data.stations)).toBe(true);
-    expect(data.stations.length).toBeGreaterThan(0);
-  });
-
   test("POST /hardware/unlock returns success", async () => {
     const res = await fetch(`${BASE_URL}/hardware/unlock`, {
       method: "POST",

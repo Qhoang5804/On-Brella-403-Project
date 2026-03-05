@@ -1,89 +1,85 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useUser } from "../context/UserContext";
+import { Link, Outlet, useLocation } from "react-router-dom";
 
 const nav = [
-  { to: "/admin", label: "Dashboard", icon: "dashboard" },
-  { to: "/admin/users", label: "Users", icon: "group" },
-  { to: "/admin/reports", label: "Reports", icon: "description" },
+  { to: "/admin", label: "Dash", icon: "grid_view" },
+  { to: "/admin/inventory", label: "Inv", icon: "inventory_2" },
+  { to: "/admin/activity", label: "Activity", icon: "history" },
+  { to: "/admin/reports", label: "Alerts", icon: "notifications_active" },
 ];
+
+const headerByPath = {
+  "/admin": { subtitle: "Overview", title: "Campus Dashboard" },
+  "/admin/inventory": { subtitle: "Stations", title: "Inventory" },
+  "/admin/activity": { subtitle: "UW Campus Monitoring", title: "Admin Activity Feed" },
+  "/admin/reports": { subtitle: "Maintenance & Alerts", title: "Active Issues" },
+};
+
+function getHeader(pathname) {
+  if (headerByPath[pathname]) return headerByPath[pathname];
+  if (pathname.startsWith("/admin/reports")) return headerByPath["/admin/reports"];
+  return { subtitle: "Admin", title: "Overview" };
+}
 
 export function AdminLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user } = useUser();
 
   const isActive = (to) =>
     location.pathname === to || (to !== "/admin" && location.pathname.startsWith(to));
 
-  const headerTitle =
-    location.pathname === "/admin/users"
-      ? "User Directory"
-      : location.pathname === "/admin/reports"
-        ? "Issue Reports"
-        : "Admin Overview";
+  const { subtitle, title } = getHeader(location.pathname);
 
   return (
-    <div className="min-h-screen min-h-dvh font-display bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
-      {/* Left sidebar */}
-      <div className="fixed top-0 left-0 h-full w-16 bg-background-dark flex flex-col items-center py-8 z-50 border-r border-slate-800">
-        <div className="mb-8">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold italic text-lg">
-            O
+    <div className="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased overflow-hidden flex h-screen min-h-dvh">
+      {/* Sidebar — inspiration: narrow, icons + labels */}
+      <aside className="w-16 flex flex-col items-center py-8 bg-sidebar-bg text-white shrink-0 z-50">
+        <Link
+          to="/profile"
+          className="mb-10 flex flex-col items-center gap-1 transition-opacity opacity-90 hover:opacity-100"
+          title="Profile"
+        >
+          <div className="w-10 h-10 bg-uw-primary rounded-xl flex items-center justify-center">
+            <span className="material-symbols-outlined text-white text-2xl font-bold">umbrella</span>
           </div>
-        </div>
-        <nav className="flex flex-col gap-6 text-slate-400">
+        </Link>
+        <nav className="flex flex-col gap-8 flex-1">
           {nav.map(({ to, label, icon }) => (
             <Link
               key={to}
               to={to}
-              className={`flex flex-col items-center gap-1 transition-colors ${
-                isActive(to) ? "text-primary" : "hover:text-white"
+              className={`flex flex-col items-center gap-1 transition-opacity ${
+                isActive(to) ? "text-uw-secondary opacity-100" : "opacity-40 hover:opacity-100"
               }`}
-              title={label}
+              title={label === "Dash" ? "Dashboard" : label === "Inv" ? "Inventory" : label === "Alerts" ? "Maintenance & Alerts" : label}
             >
               <span className="material-symbols-outlined text-2xl">{icon}</span>
+              <span className="text-[9px] font-bold uppercase tracking-tighter">{label}</span>
             </Link>
           ))}
         </nav>
-        <div className="mt-auto">
-          <Link
-            to="/"
-            className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors"
-            title="Back to app"
-          >
-            <span className="material-symbols-outlined text-2xl">exit_to_app</span>
-          </Link>
-        </div>
-      </div>
+        <Link
+          to="/"
+          className="mt-auto flex flex-col items-center gap-1 transition-opacity opacity-40 hover:opacity-100"
+          title="Map view"
+        >
+          <span className="material-symbols-outlined text-2xl">map</span>
+          <span className="text-[9px] font-bold uppercase tracking-tighter">Map</span>
+        </Link>
+      </aside>
 
-      {/* Main content area */}
-      <div className="ml-16">
-        <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-4 pt-12 pb-4">
-          <div className="flex items-center justify-between">
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 ios-blur border-b border-slate-200 dark:border-slate-800 px-4 pt-10 pb-4 shrink-0">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">
-                UW Campus Management
+              <p className="text-[10px] font-bold text-uw-primary dark:text-uw-secondary uppercase tracking-widest mb-1">
+                {subtitle}
               </p>
-              <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                {headerTitle}
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate("/profile")}
-              className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-300 dark:border-slate-600 flex items-center justify-center"
-              aria-label="Profile"
-            >
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="material-symbols-outlined text-slate-500 text-lg">person</span>
-              )}
-            </button>
           </div>
         </header>
 
-        <main className="px-4 py-6">
+        <main className="flex-1 overflow-y-auto px-4 py-4 bg-background-light dark:bg-background-dark">
           <Outlet />
         </main>
       </div>

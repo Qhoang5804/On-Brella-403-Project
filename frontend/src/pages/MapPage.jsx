@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import * as api from "../api/client";
 import { config } from "../config";
-import { getStationDisplayName } from "../utils/stationNames";
+import { getStationDisplayName, getStationAddress } from "../utils/stationNames";
 import { StationMap } from "../components/StationMap";
 import { StationBottomSheet } from "../components/StationBottomSheet";
 
@@ -15,7 +15,19 @@ export function MapPage() {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const searchInputRef = useRef(null);
   const [selectedStation, setSelectedStation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
   const mapRef = useRef(null);
+
+  /** Squared distance (for ordering only) from user to station */
+  const distanceSq = (s) => {
+    if (!userLocation) return 0;
+    const lat = s.location?.latitude;
+    const lng = s.location?.longitude;
+    if (lat == null || lng == null) return Infinity;
+    const dLat = lat - userLocation.lat;
+    const dLng = lng - userLocation.lng;
+    return dLat * dLat + dLng * dLng;
+  };
 
   const formatGeoError = (err) => {
     if (!err) return "Unable to access your location.";
@@ -48,13 +60,17 @@ export function MapPage() {
     if (searchExpanded) searchInputRef.current?.focus();
   }, [searchExpanded]);
 
-  const filteredStations = searchQuery.trim()
+  const filtered = searchQuery.trim()
     ? stations.filter(
         (s) =>
-          getStationDisplayName(s.stationId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (s.stationId || "").toLowerCase().includes(searchQuery.toLowerCase())
+          (s.name || getStationDisplayName(s.stationId)).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (s.stationId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (getStationAddress(s.stationId) || "").toLowerCase().includes(searchQuery.toLowerCase())
       )
     : stations;
+  const filteredStations = userLocation
+    ? [...filtered].sort((a, b) => distanceSq(a) - distanceSq(b))
+    : filtered;
 
   const goToScan = () => navigate("/scan", { state: { mode: "rent" } });
   const goToMyLocation = () => mapRef.current?.goToUser?.();
@@ -72,6 +88,7 @@ export function MapPage() {
       (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
+        setUserLocation({ lat, lng });
         let best = null;
         let bestD = Infinity;
         for (const s of stations) {
@@ -133,7 +150,7 @@ export function MapPage() {
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Search nearby..."
+            placeholder="Search by station name or address"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onBlur={() => {
@@ -147,6 +164,18 @@ export function MapPage() {
         {error && (
           <p className="text-red-500 text-sm mt-2 bg-white/90 dark:bg-slate-800/90 px-3 py-2 rounded-lg">
             {error}
+          </p>
+        )}
+        {userLocation && (
+          <p className="text-slate-600 dark:text-slate-400 text-xs mt-2 flex items-center gap-2">
+            <span>Nearest first</span>
+            <button
+              type="button"
+              onClick={() => setUserLocation(null)}
+              className="underline font-medium hover:text-primary"
+            >
+              Show all
+            </button>
           </p>
         )}
       </div>

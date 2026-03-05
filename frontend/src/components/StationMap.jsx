@@ -123,24 +123,31 @@ export function StationMap({
           const lat = station.location?.latitude;
           const lng = station.location?.longitude;
           if (lat == null || lng == null) return null;
+          const statusNorm = (station.status || "operational").toLowerCase().replace(/\s+/g, "_");
+          const isNonOperational = statusNorm === "out_of_service" || statusNorm === "maintenance";
           const available = station.numUmbrellas ?? 0;
           const capacity = station.capacity ?? 0;
           const isSelected = selectedStationId === station.stationId;
           const dotSize = simplified ? 24 : 18;
+          const borderColor = isNonOperational ? "#dc2626" : "#0da6f2";
+          const bgColor = isNonOperational ? "#fef2f2" : "#fff";
+          const badgeText = isNonOperational
+            ? (statusNorm === "maintenance" ? "Maintenance" : "Out of service")
+            : `${available}/${capacity}`;
           const markerIcon = L.divIcon({
             className: "station-marker border-0 bg-transparent",
             html: simplified
               ? `
               <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;">
-                <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:#fff;border:3px solid #0da6f2;box-shadow:0 2px 8px rgba(0,0,0,0.25);"></div>
+                <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${isNonOperational ? "#fef2f2" : "#fff"};border:3px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.25);"></div>
               </div>
             `
               : `
               <div style="display:flex;flex-direction:column;align-items:center;">
-                <div style="background:#fff;color:#0f172a;font-weight:700;font-size:12px;padding:5px 10px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);margin-bottom:5px;border:1px solid #e2e8f0;">
-                  ${available}/${capacity}
+                <div style="background:${bgColor};color:${isNonOperational ? "#b91c1c" : "#0f172a"};font-weight:700;font-size:12px;padding:5px 10px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);margin-bottom:5px;border:1px solid ${isNonOperational ? "#fecaca" : "#e2e8f0"};">
+                  ${badgeText}
                 </div>
-                <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${isSelected ? "#0da6f2" : "#fff"};border:3px solid #0da6f2;box-shadow:0 2px 8px rgba(0,0,0,0.25);"></div>
+                <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${isSelected ? borderColor : isNonOperational ? "#fef2f2" : "#fff"};border:3px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.25);"></div>
               </div>
             `,
             iconSize: simplified ? [dotSize, dotSize] : [60, 42],

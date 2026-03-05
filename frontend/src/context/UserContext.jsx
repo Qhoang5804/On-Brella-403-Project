@@ -12,13 +12,16 @@ import { config } from "@/config";
 
 const UserContext = createContext(null);
 
+/** If profiles fetch failed for this user id, skip calling the API again (reduces 404 noise when table is missing). */
+let skipProfilesForUserId = null;
+
 /** True if email is the hardcoded admin email (case-insensitive). */
 function isAdminEmail(email) {
   if (!email || !config.adminEmail) return false;
   return email.trim().toLowerCase() === config.adminEmail.trim().toLowerCase();
 }
 
-/** Build app profile shape from Supabase auth user; prefers profiles table then user table. */
+/** Build app profile shape from Supabase auth user; prefers profiles table then auth-only. */
 async function fetchProfileForUser(authUser) {
   if (!authUser) return null;
 
@@ -30,59 +33,47 @@ async function fetchProfileForUser(authUser) {
     authEmail.split("@")[0] ||
     "Account";
 
-  // Try `profiles` table first (recommended Supabase pattern)
+  const fallbackProfile = () => {
+    const role = isAdminEmail(authEmail) ? "admin" : "user";
+    return {
+      id: authId,
+      email: authEmail,
+      name: authName,
+      description: "",
+      avatarUrl: null,
+      role,
+    };
+  };
+
+  // Skip profiles API if we already failed once (e.g. table missing) to avoid repeated 404s
+  if (skipProfilesForUserId === authId) {
+    return fallbackProfile();
+  }
+
+  // Try `profiles` table. maybeSingle() avoids 404 when table exists but no row.
   try {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", authId)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      throw new Error("No profile row");
+    }
 
-    const email = data.email || authEmail;
-    const role = data.role === "admin" || isAdminEmail(email) ? "admin" : "user";
     return {
       id: authId,
-      email,
+      email: data.email || authEmail,
       name: data.full_name || data.name || authName,
       description: data.bio || "",
       avatarUrl: data.avatar_url || null,
-      role,
+      role: data.role === "admin" || isAdminEmail(data.email || authEmail) ? "admin" : "user",
     };
   } catch {
-    // Fallback to `user` table shape described in README, if present
-    try {
-      const { data, error } = await supabase
-        .from("user")
-        .select("*")
-        .eq("user_id", authId)
-        .single();
-
-      if (error) throw error;
-
-      const email = data.email || authEmail;
-      const role = data.role === "admin" || isAdminEmail(email) ? "admin" : "user";
-      return {
-        id: authId,
-        email,
-        name: data.name || authName,
-        description: "",
-        avatarUrl: data.avatar_url || null,
-        role,
-      };
-    } catch {
-      // Graceful fallback to auth-only identity (no profile row yet)
-      const role = isAdminEmail(authEmail) ? "admin" : "user";
-      return {
-        id: authId,
-        email: authEmail,
-        name: authName,
-        description: "",
-        avatarUrl: null,
-        role,
-      };
-    }
+    skipProfilesForUserId = authId;
+    return fallbackProfile();
   }
 }
 
@@ -121,6 +112,7 @@ export function UserProvider({ children }) {
       if (sessionError) throw sessionError;
 
       if (!session) {
+        skipProfilesForUserId = null;
         setUser(null);
         setLoading(false);
         return;
@@ -135,10 +127,18 @@ export function UserProvider({ children }) {
       const profile = await fetchProfileForUser(authUser);
       setUser(profile);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error("Failed to load user profile:", err);
-      setError(err.message || "Failed to load profile");
-      setUser(null);
+      const isSessionMissing =
+        err?.name === "AuthSessionMissingError" ||
+        err?.message?.includes("Auth session missing");
+      if (isSessionMissing) {
+        setUser(null);
+        setError(null);
+      } else {
+        // eslint-disable-next-line no-console
+        console.error("Failed to load user profile:", err);
+        setError(err.message || "Failed to load profile");
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }

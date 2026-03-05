@@ -16,6 +16,11 @@ body {
   scrollbar-width: none;
 }
 
+.ios-blur {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 .leaflet-container {
   font-family: "Plus Jakarta Sans", sans-serif;
   width: 100%;

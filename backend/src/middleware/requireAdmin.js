@@ -6,7 +6,9 @@
 const { createClient } = require("@supabase/supabase-js");
 const db = require("../db");
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+// Strip trailing slash so Supabase client works (dashboard copies URL with / sometimes)
+const rawUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseUrl = typeof rawUrl === "string" ? rawUrl.replace(/\/+$/, "") : "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /** Hardcoded admin email (backend). Override with env ADMIN_EMAIL. Case-insensitive. */
@@ -38,19 +40,30 @@ async function requireAdmin(req, res, next) {
 
   const client = getSupabase();
   if (!client) {
-    return res
-      .status(503)
-      .json({ error: "Admin auth not configured (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)" });
+    return res.status(503).json({
+      error:
+        "Admin auth not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in backend/.env (use your Supabase project URL and Project Settings → API → service_role key). See docs/admin-setup.md.",
+    });
   }
 
   try {
-    const {
-      data: { user },
-      error,
-    } = await client.auth.getUser(token);
+    const result = await client.auth.getUser(token);
+    const user = result?.data?.user ?? null;
+    const error = result?.error ?? null;
 
     if (error || !user?.id) {
-      return res.status(401).json({ error: "Invalid or expired token" });
+      if (error?.message) {
+        console.warn(
+          "Admin token verification failed:",
+          error.message,
+          "— Ensure SUPABASE_SERVICE_ROLE_KEY is from the same project as SUPABASE_URL (check project ref in dashboard URL)."
+        );
+      }
+      const message =
+        error?.message?.toLowerCase().includes("expired")
+          ? "Token expired. Please log in again."
+          : "Invalid or expired token";
+      return res.status(401).json({ error: message });
     }
 
     // Allow if hardcoded admin email (no DB required) or profiles.role === 'admin'

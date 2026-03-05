@@ -16,38 +16,75 @@ class RentalError extends Error {
 }
 
 /**
+ * Format a DB station row for the public API (map + clients). Includes location for map markers.
+ */
+function formatDbStationForApi(row) {
+  const stationId = row.station_id;
+  const capacity = row.capacity ?? 10;
+  const numUmbrellas = row.num_brellas ?? capacity;
+  const lat = row.latitude != null ? Number(row.latitude) : null;
+  const lng = row.longitude != null ? Number(row.longitude) : null;
+  return {
+    stationId,
+    name: row.name ?? null,
+    latitude: lat,
+    longitude: lng,
+    location: lat != null && lng != null ? { latitude: lat, longitude: lng } : null,
+    capacity,
+    numUmbrellas,
+    availableSlots: Math.max(0, capacity - numUmbrellas),
+    status: row.status || "operational",
+  };
+}
+
+/**
  * @returns {Promise<{stations: Array, totalStations: number}>}
- * Permanent station info from hardware; availability (numUmbrellas, availableSlots) from DB.
+ * Stations from DB (inventory) so map and dashboard match. Falls back to hardware when DB empty.
  */
 async function getStations() {
-  const { stations: rawStations, totalStations } = await hardwareClient.getStations();
   const hasDb = !!require("../db").getPool();
 
-  const stations = await Promise.all(
-    rawStations.map(async (s) => {
-      const capacity = s.capacity ?? 10;
-      let numUmbrellas = capacity;
-      if (hasDb) {
-        await stationsDb.upsertStation({
-          stationId: s.stationId,
-          latitude: s.location?.latitude,
-          longitude: s.location?.longitude,
-          capacity,
-          status: s.status ?? "operational",
-        });
-        const row = await stationsDb.getByStationId(s.stationId);
-        if (row) numUmbrellas = row.num_brellas ?? capacity;
-      }
-      const availableSlots = Math.max(0, capacity - numUmbrellas);
-      return {
-        ...s,
-        numUmbrellas,
-        availableSlots,
-      };
-    })
-  );
+  if (hasDb) {
+    const rows = await stationsDb.listStations();
+    if (rows.length > 0) {
+      const stations = rows.map((r) => formatDbStationForApi(r));
+      return { stations, totalStations: stations.length };
+    }
+  }
 
-  return { stations, totalStations };
+  try {
+    const { stations: rawStations, totalStations } = await hardwareClient.getStations();
+    const stations = await Promise.all(
+      rawStations.map(async (s) => {
+        const capacity = s.capacity ?? 10;
+        let numUmbrellas = capacity;
+        let row = null;
+        if (hasDb) {
+          await stationsDb.upsertStation({
+            stationId: s.stationId,
+            latitude: s.location?.latitude,
+            longitude: s.location?.longitude,
+            capacity,
+            status: s.status ?? "operational",
+          });
+          row = await stationsDb.getByStationId(s.stationId);
+          if (row) numUmbrellas = row.num_brellas ?? capacity;
+        }
+        const availableSlots = Math.max(0, capacity - numUmbrellas);
+        const status = row?.status ?? s.status ?? "operational";
+        return {
+          ...s,
+          name: row?.name ?? s.name,
+          numUmbrellas,
+          availableSlots,
+          status,
+        };
+      })
+    );
+    return { stations, totalStations };
+  } catch {
+    return { stations: [], totalStations: 0 };
+  }
 }
 
 /**

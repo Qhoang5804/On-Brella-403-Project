@@ -20,6 +20,8 @@ import { AdminLayout } from "./components/AdminLayout";
 import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
 import { AdminUsersPage } from "./pages/admin/AdminUsersPage";
 import { AdminReportsPage } from "./pages/admin/AdminReportsPage";
+import { AdminActivityPage } from "./pages/admin/AdminActivityPage";
+import { AdminInventoryPage } from "./pages/admin/AdminInventoryPage";
 import UpdatePasswordPage from "./pages/UpdatePassword";
 
 function App() {
@@ -45,6 +47,8 @@ function App() {
       }
     >
       <Route index element={<AdminDashboardPage />} />
+      <Route path="activity" element={<AdminActivityPage />} />
+      <Route path="inventory" element={<AdminInventoryPage />} />
       <Route path="users" element={<AdminUsersPage />} />
       <Route path="reports" element={<AdminReportsPage />} />
     </Route>

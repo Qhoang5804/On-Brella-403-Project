@@ -12,7 +12,8 @@ router.get("/", async (_req, res, next) => {
     const data = await rentalService.getStations();
     res.json(data);
   } catch (err) {
-    next(err);
+    // Avoid 500 when hardware mock is down or DB fails — return empty so map still loads
+    res.json({ stations: [], totalStations: 0 });
   }
 });
 

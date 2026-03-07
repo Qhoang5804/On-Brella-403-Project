@@ -136,6 +136,39 @@ async function countActiveRentals() {
   return rows[0]?.count ?? 0;
 }
 
+/**
+ * List recent rentals for admin activity feed. Joins profiles for user display name.
+ * @param {number} [limit=50]
+ * @returns {Promise<Array<object>>} Rentals with userFullName, userEmail (null if guest/unknown)
+ */
+async function listRecentForAdmin(limit = 50) {
+  const safeLimit = Number.isFinite(limit) && limit > 0 && limit <= 100 ? limit : 50;
+  const { rows } = await db.query(
+    `SELECT r.rental_id, r.session_id, r.umbrella_id, r.station_id, r.slot_number,
+            r.start_time, r.end_time, r.return_station_id, r.return_slot_number, r.status,
+            p.full_name AS user_full_name, p.email AS user_email
+     FROM rentals r
+     LEFT JOIN profiles p ON r.session_id = p.id
+     ORDER BY r.start_time DESC
+     LIMIT $1`,
+    [safeLimit]
+  );
+  return rows.map((row) => ({
+    rentalId: row.rental_id,
+    sessionId: row.session_id,
+    umbrellaId: row.umbrella_id,
+    stationId: row.station_id,
+    slotNumber: row.slot_number,
+    startTime: row.start_time ? new Date(row.start_time).toISOString() : null,
+    endTime: row.end_time ? new Date(row.end_time).toISOString() : null,
+    returnStationId: row.return_station_id,
+    returnSlotNumber: row.return_slot_number,
+    status: row.status,
+    userFullName: row.user_full_name || null,
+    userEmail: row.user_email || null,
+  }));
+}
+
 module.exports = {
   create,
   complete,
@@ -144,4 +177,5 @@ module.exports = {
   listBySession,
   countBySession,
   countActiveRentals,
+  listRecentForAdmin,
 };

@@ -27,6 +27,24 @@ async function getStations() {
 }
 
 /**
+ * Register or update a station with the hardware layer (optional).
+ * If the hardware API does not support this (e.g. mock returns 404), the call fails silently
+ * from the caller's perspective; the station is already persisted in the DB.
+ * @param {object} station - { stationId, location?: { latitude, longitude }, capacity, status }
+ * @returns {Promise<void>}
+ */
+async function registerStation(station) {
+  const res = await fetch(`${BASE_URL}/hardware/stations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(station),
+  });
+  if (!res.ok) {
+    throw new HardwareError(`Hardware register station: ${res.status}`, res.status);
+  }
+}
+
+/**
  * @param {string} stationId
  * @param {number} slotNumber
  * @returns {Promise<{success: boolean, message: string, stationId: string, slotNumber: number}>}
@@ -73,6 +91,7 @@ class HardwareError extends Error {
 
 module.exports = {
   getStations,
+  registerStation,
   unlock,
   returnUmbrella,
   HardwareError,

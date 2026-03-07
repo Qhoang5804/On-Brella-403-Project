@@ -3,35 +3,6 @@
   "folders": [],
   "routes": [
     {
-      "uuid": "70ae7fd3-7adf-435c-9f8e-f68a2ed28f8b",
-      "method": "get",
-      "endpoint": "/hardware/stations",
-      "documentation": "List all stations",
-      "responses": [{
-        "uuid": "7a635bf4-9101-47a8-89b3-0a7b25bbf496",
-        "statusCode": 200,
-        "label": "Stations",
-        "headers": [{"key": "Content-Type", "value": "application/json"}],
-        "body": "{\"stations\":[{\"stationId\":\"fuzzball_01\",\"location\":{\"latitude\":47.65569444,\"longitude\":-122.30880556},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"station-hub\",\"location\":{\"latitude\":47.656,\"longitude\":-122.304},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"fuzzball_02\",\"location\":{\"latitude\":47.655446,\"longitude\":-122.305722},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"station-003\",\"location\":{\"latitude\":47.6548,\"longitude\":-122.307},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"station-004\",\"location\":{\"latitude\":47.657,\"longitude\":-122.3065},\"status\":\"operational\",\"capacity\":10},{\"stationId\":\"station-005\",\"location\":{\"latitude\":47.6552,\"longitude\":-122.302},\"status\":\"operational\",\"capacity\":10}],\"totalStations\":6,\"timestamp\":\"\"}",
-        "latency": 0,
-        "bodyType": "INLINE",
-        "filePath": "",
-        "databucketID": "",
-        "sendFileAsBody": false,
-        "rules": [],
-        "rulesOperator": "OR",
-        "disableTemplating": false,
-        "fallbackTo404": false,
-        "default": true,
-        "crudKey": "id",
-        "callbacks": []
-      }],
-      "responseMode": null,
-      "type": "http",
-      "streamingMode": null,
-      "streamingInterval": 0
-    },
-    {
       "uuid": "226d9ac1-6d91-4ea6-9c95-d287f96e3214",
       "method": "post",
       "endpoint": "/hardware/unlock",
@@ -105,7 +76,6 @@
   "latency": 0,
   "hostname": "",
   "rootChildren": [
-    {"type": "route", "uuid": "70ae7fd3-7adf-435c-9f8e-f68a2ed28f8b"},
     {"type": "route", "uuid": "226d9ac1-6d91-4ea6-9c95-d287f96e3214"},
     {"type": "route", "uuid": "276bb7d6-7908-400d-9927-9c4ccbd7db0b"}
   ],

@@ -25,7 +25,6 @@ echo "Checking endpoints at $BASE_URL"
 echo "(To use a different host, run: HARDWARE_URL=http://HOST:3000 ./test-mock.sh)"
 echo ""
 
-check "GET /hardware/stations" "$BASE_URL/hardware/stations"
 check "POST /hardware/unlock" "$BASE_URL/hardware/unlock" '{"stationId":"station-001","slotNumber":5}'
 check "POST /hardware/return" "$BASE_URL/hardware/return" '{"stationId":"station-001","slotNumber":3,"umbrellaId":"umbrella-123"}'
 

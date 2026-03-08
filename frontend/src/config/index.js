@@ -22,10 +22,6 @@ export const config = {
   /** Pricing display (extensible: could come from API later) */
   unlockFeeCents: 100,
   centsPerMinute: 10,
-  /** Max profile image size (bytes). Default 5MB. */
-  maxAvatarSizeBytes: 5 * 1024 * 1024,
-  /** Allowed avatar MIME types */
-  allowedAvatarTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
   /**
    * Hardcoded admin email for admin-only UI/API access (no DB role required).
    * Override with VITE_ADMIN_EMAIL. Compare case-insensitively.

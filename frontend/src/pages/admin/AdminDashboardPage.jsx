@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { RentalTrendsCard, StatsCards, LocationsCard } from "../../components/admin";
-import { adminGetStats, adminGetActivity, adminGetStations } from "../../api/adminClient";
+import { adminGetStats, adminGetRentalTrends, adminGetStations } from "../../api/adminClient";
 import { getStationDisplayName, getStationAddress } from "../../utils/stationNames";
-
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -12,7 +10,7 @@ export function AdminDashboardPage() {
     activeSessions: 0,
     criticalAlerts: 0,
   });
-  const [rentalTimes, setRentalTimes] = useState([]);
+  const [trendBuckets, setTrendBuckets] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,9 +21,14 @@ export function AdminDashboardPage() {
     async function load() {
       setError(null);
       try {
-        const [statsRes, activityRes, stationsRes] = await Promise.all([
-          adminGetStats().catch((e) => ({ totalUmbrellas: null, activeRentalsCount: 0, openReportsCount: 0 })),
-          adminGetActivity(100).catch(() => ({ activities: [] })),
+        const [statsRes, trendsRes, stationsRes] = await Promise.all([
+          adminGetStats().catch((e) => ({
+            totalUmbrellas: null,
+            activeRentalsCount: 0,
+            openReportsCount: 0,
+            openCriticalReportsCount: 0,
+          })),
+          adminGetRentalTrends(24).catch(() => ({ buckets: [] })),
           adminGetStations().catch(() => ({ stations: [] })),
         ]);
         const stationsList = stationsRes.stations || [];
@@ -36,12 +39,7 @@ export function AdminDashboardPage() {
 
         if (cancelled) return;
 
-        const now = Date.now();
-        const since = now - ONE_DAY_MS;
-        const times = (activityRes.activities || [])
-          .map((a) => a.startTime)
-          .filter((t) => t && new Date(t).getTime() >= since);
-        setRentalTimes(times);
+        setTrendBuckets(trendsRes.buckets || []);
 
         const totalAvailable = operationalStations.reduce(
           (sum, st) => sum + (st.numUmbrellas != null ? st.numUmbrellas : st.capacity ?? 0),
@@ -56,7 +54,8 @@ export function AdminDashboardPage() {
           totalAvailable,
           totalCapacity,
           activeSessions: statsRes.activeSessions ?? 0,
-          criticalAlerts: statsRes.openReportsCount ?? 0,
+          criticalAlerts:
+            statsRes.openCriticalReportsCount ?? statsRes.openReportsCount ?? 0,
         });
 
         const locs = displayStations.map((s) => ({
@@ -104,7 +103,7 @@ export function AdminDashboardPage() {
       />
 
       <RentalTrendsCard
-        rentalTimes={rentalTimes}
+        buckets={trendBuckets}
         title="Rental Trends"
         periodLabel="Last 24 Hours"
       />

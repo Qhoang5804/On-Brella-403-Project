@@ -114,6 +114,17 @@ export async function adminGetActivity(limit = 50) {
 }
 
 /**
+ * @param {number} [hours=24]
+ * @returns {Promise<{ hours: number, buckets: Array<{ bucketStart: string, count: number }> }>}
+ */
+export async function adminGetRentalTrends(hours = 24) {
+  return adminRequest(
+    "GET",
+    `/api/admin/trends?hours=${Math.min(168, Math.max(1, Number(hours) || 24))}`
+  );
+}
+
+/**
  * @returns {Promise<{ reports: Array }>}
  */
 export async function adminGetReports() {
@@ -174,4 +185,37 @@ export async function adminUpdateStation(stationId, payload) {
  */
 export async function adminDeleteStation(stationId) {
   return adminRequest("DELETE", `/api/admin/stations/${encodeURIComponent(stationId)}`);
+}
+
+/**
+ * Get current pricing settings from the backend.
+ * @returns {Promise<{unlockFeeCents: number, centsPerMinute: number}>}
+ */
+export async function adminGetPricing() {
+  return adminRequest("GET", "/api/admin/pricing");
+}
+
+/**
+ * Update pricing settings in the backend.
+ * @param {number} unlockFeeCents
+ * @param {number} centsPerMinute
+ * @returns {Promise<{unlockFeeCents: number, centsPerMinute: number}>}
+ */
+export async function adminUpdatePricing(unlockFeeCents, centsPerMinute) {
+  return adminRequest("PUT", "/api/admin/pricing", { unlockFeeCents, centsPerMinute });
+}
+
+/**
+ * @returns {Promise<{ key: string, document: object, updatedAt: string|null, updatedBy: string|null, source: string }>}
+ */
+export async function adminGetTermsContent() {
+  return adminRequest("GET", "/api/admin/content/terms");
+}
+
+/**
+ * @param {object} document
+ * @returns {Promise<{ key: string, document: object, updatedAt: string|null, updatedBy: string|null, source: string }>}
+ */
+export async function adminUpdateTermsContent(document) {
+  return adminRequest("PUT", "/api/admin/content/terms", { document });
 }

@@ -73,13 +73,11 @@ export function RentalProvider({ children }) {
         slotNumber,
         activeRental.umbrellaId
       );
-      const start = new Date(activeRental.startTime).getTime();
-      const end = new Date(result.endTime).getTime();
-      const durationMs = end - start;
       const summary = {
         rentalId: activeRental.rentalId,
         endTime: result.endTime,
-        durationMs,
+        durationMs: result.durationMs,
+        costCents: result.costCents,
         pickUpStationId: activeRental.stationId,
         returnStationId: stationId,
       };

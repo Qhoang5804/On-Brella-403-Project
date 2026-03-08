@@ -9,8 +9,11 @@ import { ThankYouPage } from "./pages/ThankYouPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { PersonalInfoPage } from "./pages/PersonalInfoPage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { HelpSupportPage } from "./pages/HelpSupportPage";
 import { preloadStationData } from "./utils/stationNames";
 import { HistoryPage } from "./pages/HistoryPage";
+import { SubmitComplaintPage } from "./pages/SubmitComplaintPage";
+import { TermsPage } from "./pages/TermsPage";
 import LoginPage from "./pages/Login";
 import SignUpPage from "./pages/SignUp";
 import ForgotPasswordPage from "./pages/ForgotPassword";
@@ -22,6 +25,7 @@ import { AdminUsersPage } from "./pages/admin/AdminUsersPage";
 import { AdminReportsPage } from "./pages/admin/AdminReportsPage";
 import { AdminActivityPage } from "./pages/admin/AdminActivityPage";
 import { AdminInventoryPage } from "./pages/admin/AdminInventoryPage";
+import { AdminContentPage } from "./pages/admin/AdminContentPage";
 import UpdatePasswordPage from "./pages/UpdatePassword";
 
 function App() {
@@ -51,6 +55,7 @@ function App() {
       <Route path="inventory" element={<AdminInventoryPage />} />
       <Route path="users" element={<AdminUsersPage />} />
       <Route path="reports" element={<AdminReportsPage />} />
+      <Route path="content" element={<AdminContentPage />} />
     </Route>
 
     {/* App routes (wrapped in MainLayout) */}
@@ -148,7 +153,23 @@ function App() {
               path="/profile/help"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage title="Help & Support" />
+                  <HelpSupportPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/help/complaint"
+              element={
+                <ProtectedRoute>
+                  <SubmitComplaintPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/help/terms"
+              element={
+                <ProtectedRoute>
+                  <TermsPage />
                 </ProtectedRoute>
               }
             />

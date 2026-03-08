@@ -1,10 +1,6 @@
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import { config } from "../config";
-import { supabase } from "@/lib/supabase/client";
-
-const AVATAR_BUCKET = "avatars";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validate({ name, email }) {
@@ -16,23 +12,21 @@ function validate({ name, email }) {
 }
 
 /**
- * Personal Information page — edit name, bio, email. Persists via UserContext (Supabase profiles).
+ * Personal Information page — edit name, location, email. Persists via UserContext (Supabase profiles).
  *
- * Layout: Back to account link, avatar (upload to Supabase Storage), About card (name, bio),
+ * Layout: Back to account link, About card (name, location),
  * Contact card (email), Save Changes. Validation on name and email before save.
  */
 export function PersonalInfoPage() {
   const { user, loading, updateUser } = useUser();
-  const fileInputRef = useRef(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [avatarUploading, setAvatarUploading] = useState(false);
   const [editData, setEditData] = useState({
     name: "",
     email: "",
-    description: "",
+    location: "",
   });
 
   useEffect(() => {
@@ -40,7 +34,7 @@ export function PersonalInfoPage() {
       setEditData({
         name: user.name ?? "",
         email: user.email ?? "",
-        description: user.description ?? "",
+        location: user.location ?? "",
       });
     }
   }, [user]);
@@ -57,7 +51,7 @@ export function PersonalInfoPage() {
       await updateUser({
         name: String(editData.name).trim(),
         email: String(editData.email).trim(),
-        description: String(editData.description ?? "").trim(),
+        location: String(editData.location ?? "").trim(),
       });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -75,50 +69,17 @@ export function PersonalInfoPage() {
     setSaveError(null);
   };
 
-  const handleAvatarClick = () => fileInputRef.current?.click();
-
-  const handleAvatarFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !user?.id) return;
-    if (!file.type.startsWith("image/")) return;
-    const allowed = config.allowedAvatarTypes || ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowed.includes(file.type)) return;
-    const maxBytes = config.maxAvatarSizeBytes ?? 5 * 1024 * 1024;
-    if (file.size > maxBytes) return;
-
-    setAvatarUploading(true);
-    try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from(AVATAR_BUCKET).upload(path, file, { cacheControl: "3600", upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
-      await updateUser({ avatarUrl: urlData.publicUrl });
-    } catch (err) {
-      console.error("Avatar upload failed:", err);
-      setSaveError(err.message || "Failed to upload photo.");
-    } finally {
-      setAvatarUploading(false);
-    }
-  };
-
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col">
         <main className="flex-1 w-full max-w-md mx-auto px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 md:pt-8 pb-12">
           <div className="h-6 w-24 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mb-4" />
           <div className="h-8 w-48 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mb-6" />
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-28 h-28 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
-          </div>
           <div className="h-12 w-full rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
         </main>
       </div>
     );
   }
-
-  const avatarUrl = user.avatarUrl || null;
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col overflow-x-hidden">
@@ -131,37 +92,6 @@ export function PersonalInfoPage() {
           Back to account
         </Link>
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4 px-1">Personal Information</h1>
-
-        <div className="flex flex-col items-center mb-8">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            aria-hidden
-            onChange={handleAvatarFile}
-          />
-          <div className="relative">
-            <div className="w-28 h-28 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-900 shadow-sm">
-              {avatarUploading ? (
-                <span className="material-symbols-outlined text-5xl text-slate-400 animate-pulse">cloud_upload</span>
-              ) : avatarUrl ? (
-                <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <span className="material-symbols-outlined text-6xl text-slate-400 dark:text-slate-600">person</span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={handleAvatarClick}
-              disabled={avatarUploading}
-              className="absolute bottom-1 right-1 bg-primary text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-slate-900 flex items-center justify-center hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-60"
-              aria-label="Change photo"
-            >
-              <span className="material-symbols-outlined text-base">photo_camera</span>
-            </button>
-          </div>
-        </div>
 
         {saveError && (
           <div className="mb-4 p-3 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
@@ -191,9 +121,9 @@ export function PersonalInfoPage() {
               <span className="material-symbols-outlined text-slate-900 dark:text-slate-100 mr-4 shrink-0">home</span>
               <input
                 type="text"
-                value={editData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Short bio or location"
+                value={editData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+                placeholder="Location"
                 className="flex-1 bg-transparent border-none p-0 text-[17px] font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-0 focus:outline-none min-w-0"
               />
             </div>

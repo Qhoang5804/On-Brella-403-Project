@@ -3,7 +3,7 @@
  *
  * On session change, fetches profile from Supabase (profiles table, or user table fallback).
  * Exposes: user, loading, error, updateUser (async, persists to Supabase), resetUser, refreshUser.
- * Profile fields: id, name, email, description, avatarUrl, role ('user' | 'admin').
+ * Profile fields: id, name, email, location, role ('user' | 'admin').
  * Admin role: from profiles.role === 'admin' OR hardcoded admin email (config.adminEmail).
  */
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
@@ -14,6 +14,31 @@ const UserContext = createContext(null);
 
 /** If profiles fetch failed for this user id, skip calling the API again (reduces 404 noise when table is missing). */
 let skipProfilesForUserId = null;
+const PROFILES_TABLE_MISSING_KEY = "onbrella_profiles_table_missing";
+
+function isProfilesTableMarkedMissing() {
+  try {
+    return sessionStorage.getItem(PROFILES_TABLE_MISSING_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function markProfilesTableMissing() {
+  try {
+    sessionStorage.setItem(PROFILES_TABLE_MISSING_KEY, "true");
+  } catch {
+    // Ignore storage failures and keep runtime fallback.
+  }
+}
+
+function clearProfilesTableMissingFlag() {
+  try {
+    sessionStorage.removeItem(PROFILES_TABLE_MISSING_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
 
 /** True if email is the hardcoded admin email (case-insensitive). */
 function isAdminEmail(email) {
@@ -39,14 +64,13 @@ async function fetchProfileForUser(authUser) {
       id: authId,
       email: authEmail,
       name: authName,
-      description: "",
-      avatarUrl: null,
+      location: "",
       role,
     };
   };
 
   // Skip profiles API if we already failed once (e.g. table missing) to avoid repeated 404s
-  if (skipProfilesForUserId === authId) {
+  if (skipProfilesForUserId === authId || isProfilesTableMarkedMissing()) {
     return fallbackProfile();
   }
 
@@ -67,17 +91,19 @@ async function fetchProfileForUser(authUser) {
       id: authId,
       email: data.email || authEmail,
       name: data.full_name || data.name || authName,
-      description: data.bio || "",
-      avatarUrl: data.avatar_url || null,
+      location: data.bio || "",
       role: data.role === "admin" || isAdminEmail(data.email || authEmail) ? "admin" : "user",
     };
-  } catch {
+  } catch (err) {
     skipProfilesForUserId = authId;
+    if (err?.code === "PGRST205" || err?.status === 404) {
+      markProfilesTableMissing();
+    }
     return fallbackProfile();
   }
 }
 
-/** Upsert current user profile to Supabase profiles table (id, full_name, email, bio, avatar_url). */
+/** Upsert current user profile to Supabase profiles table (id, full_name, email, bio/location). */
 async function persistProfile(profile) {
   if (!profile?.id) return;
 
@@ -85,8 +111,7 @@ async function persistProfile(profile) {
     id: profile.id,
     email: profile.email || null,
     full_name: profile.name || null,
-    bio: profile.description || null,
-    avatar_url: profile.avatarUrl || null,
+    bio: profile.location || null,
   };
 
   // Upsert into `profiles` table; ignore errors for now (caller handles)
@@ -113,6 +138,7 @@ export function UserProvider({ children }) {
 
       if (!session) {
         skipProfilesForUserId = null;
+        clearProfilesTableMissingFlag();
         setUser(null);
         setLoading(false);
         return;

@@ -1,32 +1,68 @@
+import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { adminGetStats } from "../api/adminClient";
 
 const nav = [
   { to: "/admin", label: "Dash", icon: "grid_view" },
   { to: "/admin/inventory", label: "Inv", icon: "inventory_2" },
   { to: "/admin/activity", label: "Activity", icon: "history" },
   { to: "/admin/reports", label: "Alerts", icon: "notifications_active" },
+  { to: "/admin/content", label: "Content", icon: "edit_document" },
 ];
 
 const headerByPath = {
   "/admin": { subtitle: "Overview", title: "Campus Dashboard" },
   "/admin/inventory": { subtitle: "Stations", title: "Inventory" },
   "/admin/activity": { subtitle: "UW Campus Monitoring", title: "Admin Activity Feed" },
-  "/admin/reports": { subtitle: "Maintenance & Alerts", title: "Active Issues" },
+  "/admin/reports": { subtitle: "Alerts & Reports", title: "Active Alerts" },
+  "/admin/content": { subtitle: "App Copy", title: "Content Management" },
 };
 
 function getHeader(pathname) {
   if (headerByPath[pathname]) return headerByPath[pathname];
   if (pathname.startsWith("/admin/reports")) return headerByPath["/admin/reports"];
+  if (pathname.startsWith("/admin/content")) return headerByPath["/admin/content"];
   return { subtitle: "Admin", title: "Overview" };
 }
 
 export function AdminLayout() {
   const location = useLocation();
+  const [criticalAlerts, setCriticalAlerts] = useState(0);
 
   const isActive = (to) =>
     location.pathname === to || (to !== "/admin" && location.pathname.startsWith(to));
 
+  const hasCriticalAlertHighlight = (to) =>
+    to === "/admin/reports" && criticalAlerts > 0;
+
   const { subtitle, title } = getHeader(location.pathname);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStats() {
+      try {
+        const stats = await adminGetStats();
+        if (!cancelled) {
+          setCriticalAlerts(
+            stats.openCriticalReportsCount ?? stats.openReportsCount ?? 0
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setCriticalAlerts(0);
+        }
+      }
+    }
+
+    loadStats();
+    const intervalId = window.setInterval(loadStats, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [location.pathname]);
 
   return (
     <div className="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased overflow-hidden flex h-screen min-h-dvh">
@@ -47,11 +83,33 @@ export function AdminLayout() {
               key={to}
               to={to}
               className={`flex flex-col items-center gap-1 transition-opacity ${
-                isActive(to) ? "text-uw-secondary opacity-100" : "opacity-40 hover:opacity-100"
+                isActive(to)
+                  ? "text-uw-secondary opacity-100"
+                  : hasCriticalAlertHighlight(to)
+                    ? "text-white opacity-100"
+                    : "opacity-40 hover:opacity-100"
               }`}
-              title={label === "Dash" ? "Dashboard" : label === "Inv" ? "Inventory" : label === "Alerts" ? "Maintenance & Alerts" : label}
+              title={
+                label === "Dash"
+                  ? "Dashboard"
+                  : label === "Inv"
+                    ? "Inventory"
+                    : label === "Alerts"
+                      ? "Alerts & Reports"
+                      : label === "Content"
+                        ? "Content Management"
+                        : label
+              }
             >
-              <span className="material-symbols-outlined text-2xl">{icon}</span>
+              <span className="relative flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl">{icon}</span>
+                {to === "/admin/reports" && criticalAlerts > 0 && (
+                  <>
+                    <span className="absolute -top-0.5 -right-1.5 inline-flex h-3.5 w-3.5 rounded-full bg-red-500 opacity-75 animate-ping" />
+                    <span className="absolute -top-0.5 -right-1.5 inline-flex h-3.5 w-3.5 rounded-full bg-red-500 border-2 border-sidebar-bg" />
+                  </>
+                )}
+              </span>
               <span className="text-[9px] font-bold uppercase tracking-tighter">{label}</span>
             </Link>
           ))}

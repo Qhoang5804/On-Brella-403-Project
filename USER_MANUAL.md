@@ -103,3 +103,9 @@ To help our team solve the issue, include:
 
 - The "Thank You" page may not always appear after successfully returning an umbrella.
 
+## Admin Pricing Settings
+
+Administrators can now adjust rental pricing directly from the admin dashboard. In the Inventory tab, there will be a **Pricing** block with fields for the unlock fee and per‑minute charge (in cents). Changes are saved to the backend and take effect immediately for subsequent rentals; the backend uses these values when calculating cost at the end of each rental.
+
+Pricing updates do *not* retroactively alter costs for previously completed rentals. Historical costs displayed in the user history may still be computed locally and therefore may differ if rates change.
+

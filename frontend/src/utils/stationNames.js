@@ -21,11 +21,11 @@ const fallbackNames = {
 };
 
 const fallbackAddresses = {
-  "station-001": "411 Library Way, Seattle, WA 98195",
-  "station-002": "HUB, Seattle, WA 98195",
-  "station-003": "Kane Hall, Seattle, WA 98195",
-  "station-004": "North Campus, Seattle, WA 98195",
-  "station-005": "Red Square, Seattle, WA 98195",
+  // "station-001": "411 Library Way, Seattle, WA 98195",
+  // "station-002": "HUB, Seattle, WA 98195",
+  // "station-003": "Kane Hall, Seattle, WA 98195",
+  // "station-004": "North Campus, Seattle, WA 98195",
+  // "station-005": "Red Square, Seattle, WA 98195",
 };
 
 /**

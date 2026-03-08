@@ -8,7 +8,7 @@ import * as api from "../api/client";
 
 export function ActivePage() {
   const navigate = useNavigate();
-  const { activeRental, endRental } = useRental();
+  const { activeRental, endRental, lastReturnSummary } = useRental();
   const mapRef = useRef(null);
   const searchInputRef = useRef(null);
   const [status, setStatus] = useState("idle");
@@ -32,9 +32,9 @@ export function ActivePage() {
   // Access only during active rental: redirect if none
   useEffect(() => {
     if (!hasValidRental) {
-      navigate("/", { replace: true });
+      navigate(lastReturnSummary ? "/thank-you" : "/", { replace: true });
     }
-  }, [hasValidRental, navigate]);
+  }, [hasValidRental, lastReturnSummary, navigate]);
 
   useEffect(() => {
     if (!hasValidRental) return;

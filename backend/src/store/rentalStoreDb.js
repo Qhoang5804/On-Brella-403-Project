@@ -169,6 +169,38 @@ async function listRecentForAdmin(limit = 50) {
   }));
 }
 
+/**
+ * Aggregate rental starts into hourly buckets for the admin dashboard trend chart.
+ * Returns oldest-to-newest buckets covering the trailing N hours, including the current hour.
+ * @param {number} [hours=24]
+ * @returns {Promise<Array<{ bucketStart: string, count: number }>>}
+ */
+async function listTrendBuckets(hours = 24) {
+  const safeHours = Number.isFinite(hours) && hours > 0 ? Math.floor(hours) : 24;
+  const { rows } = await db.query(
+    `WITH buckets AS (
+       SELECT generate_series(
+         date_trunc('hour', now()) - (($1::int - 1) * interval '1 hour'),
+         date_trunc('hour', now()),
+         interval '1 hour'
+       ) AS bucket_start
+     )
+     SELECT b.bucket_start, COALESCE(COUNT(r.rental_id), 0)::int AS count
+     FROM buckets b
+     LEFT JOIN rentals r
+       ON r.start_time >= b.bucket_start
+      AND r.start_time < b.bucket_start + interval '1 hour'
+     GROUP BY b.bucket_start
+     ORDER BY b.bucket_start ASC`,
+    [safeHours]
+  );
+
+  return rows.map((row) => ({
+    bucketStart: row.bucket_start ? new Date(row.bucket_start).toISOString() : null,
+    count: row.count ?? 0,
+  }));
+}
+
 module.exports = {
   create,
   complete,
@@ -178,4 +210,5 @@ module.exports = {
   countBySession,
   countActiveRentals,
   listRecentForAdmin,
+  listTrendBuckets,
 };

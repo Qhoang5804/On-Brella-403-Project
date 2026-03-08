@@ -6,6 +6,7 @@
 const hardwareClient = require("./hardwareClient");
 const getRentalStore = require("../store/getRentalStore");
 const stationsDb = require("../db/stations");
+const configDb = require("../db/config");
 
 class RentalError extends Error {
   constructor(message, statusCode = 400) {
@@ -131,7 +132,7 @@ async function startRental(sessionId, stationId, slotNumber) {
  * @param {string} stationId
  * @param {number} slotNumber
  * @param {string} umbrellaId
- * @returns {Promise<{success: boolean, rentalId: string, endTime: string}>}
+ * @returns {Promise<{success: boolean, rentalId: string, endTime: string, costCents: number, durationMs: number}>}
  */
 async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId) {
   const store = getRentalStore();
@@ -164,10 +165,21 @@ async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId)
 
   await stationsDb.incrementNumBrellas(stationId);
 
+  // Calculate cost
+  const startTime = new Date(rental.startTime).getTime();
+  const endTime = new Date(updated.endTime).getTime();
+  const durationMs = endTime - startTime;
+  const minutes = Math.ceil(durationMs / 60000);
+  const unlockFeeCents = parseInt(await configDb.get("unlockFeeCents") || "100", 10);
+  const centsPerMinute = parseInt(await configDb.get("centsPerMinute") || "10", 10);
+  const costCents = unlockFeeCents + minutes * centsPerMinute;
+
   return {
     success: true,
     rentalId,
     endTime: updated.endTime,
+    costCents,
+    durationMs,
   };
 }
 

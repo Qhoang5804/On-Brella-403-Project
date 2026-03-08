@@ -8,6 +8,17 @@ const { createMockRentalStore } = require("./mockRentalStore");
 const mockStore = createMockRentalStore();
 jest.mock("../src/store/getRentalStore", () => () => mockStore);
 
+// bypass admin auth for tests
+jest.mock("../src/middleware/requireAdmin", () => ({
+  requireAdmin: (_req, _res, next) => next(),
+}));
+
+// mock config db operations
+jest.mock("../src/db/config", () => ({
+  get: jest.fn(),
+  set: jest.fn(),
+}));
+
 jest.mock("../src/db/stations", () => ({
   upsertStation: jest.fn().mockResolvedValue(),
   getByStationId: jest.fn().mockResolvedValue({ num_brellas: 7 }),
@@ -191,6 +202,27 @@ describe("API endpoints", () => {
       .send({ rentalId: "r1", stationId: "s1" }); // missing slotNumber, umbrellaId
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("slotNumber");
+  });
+
+  test("GET /api/admin/pricing returns defaults when config missing", async () => {
+    const configDb = require("../src/db/config");
+    configDb.get.mockResolvedValue(null);
+    const res = await request(app).get("/api/admin/pricing");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ unlockFeeCents: 100, centsPerMinute: 10 });
+  });
+
+  test("PUT /api/admin/pricing updates values", async () => {
+    const configDb = require("../src/db/config");
+    configDb.set.mockResolvedValue();
+    const res = await request(app)
+      .put("/api/admin/pricing")
+      .set("Content-Type", "application/json")
+      .send({ unlockFeeCents: 200, centsPerMinute: 20 });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ unlockFeeCents: 200, centsPerMinute: 20 });
+    expect(configDb.set).toHaveBeenCalledWith("unlockFeeCents", "200");
+    expect(configDb.set).toHaveBeenCalledWith("centsPerMinute", "20");
   });
 
   test("POST /api/return wrong session returns 403", async () => {

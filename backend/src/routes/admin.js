@@ -10,7 +10,7 @@ const getRentalStore = require("../store/getRentalStore");
 const supportRequestStore = require("../store/supportRequestStoreDb");
 const stationAdminService = require("../services/stationAdminService");
 const rentalTrendService = require("../services/rentalTrendService");
-const termsContentService = require("../services/termsContentService");
+const appContentService = require("../services/appContentService");
 const { requireJsonContentType, requireBody, requireFields } = require("../middleware/validate");
 
 const router = express.Router();
@@ -169,34 +169,41 @@ router.get("/reports", async (_req, res) => {
 });
 
 /**
- * GET /api/admin/content/terms — Fetch the editable terms document.
+ * GET /api/admin/content/:contentKey — Fetch editable app content by key.
  */
-router.get("/content/terms", async (_req, res, next) => {
+router.get("/content/:contentKey", async (req, res, next) => {
   try {
-    const content = await termsContentService.getTermsContent();
+    const content = await appContentService.getContent(req.params.contentKey);
     return res.json(content);
   } catch (err) {
+    if (err.statusCode === 404) {
+      return res.status(404).json({ error: "Content type not found" });
+    }
     return next(err);
   }
 });
 
 /**
- * PUT /api/admin/content/terms — Save the editable terms document.
+ * PUT /api/admin/content/:contentKey — Save editable app content by key.
  * Body: { document }
  */
 router.put(
-  "/content/terms",
+  "/content/:contentKey",
   requireJsonContentType,
   requireBody,
   requireFields("document"),
   async (req, res, next) => {
     try {
-      const content = await termsContentService.updateTermsContent(
+      const content = await appContentService.updateContent(
+        req.params.contentKey,
         req.body.document,
         req.adminUserId ?? null
       );
       return res.json(content);
     } catch (err) {
+      if (err.statusCode === 404) {
+        return res.status(404).json({ error: "Content type not found" });
+      }
       const isValidation =
         err.message?.includes("required") ||
         err.message?.includes("must be") ||
@@ -419,6 +426,7 @@ router.delete("/stations/:stationId", async (req, res, next) => {
     if (err.message?.includes("Database not configured")) {
       return res.status(503).json({ error: err.message });
     }
+    return next(err);
   }
 });
 

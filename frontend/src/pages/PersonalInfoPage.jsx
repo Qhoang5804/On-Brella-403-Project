@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -19,6 +19,7 @@ function validate({ name, email }) {
  */
 export function PersonalInfoPage() {
   const { user, loading, updateUser } = useUser();
+  const successTimerRef = useRef(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -39,6 +40,14 @@ export function PersonalInfoPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        window.clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleSave = async () => {
     const errors = validate(editData);
     setFieldErrors(errors);
@@ -54,7 +63,13 @@ export function PersonalInfoPage() {
         location: String(editData.location ?? "").trim(),
       });
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      if (successTimerRef.current) {
+        window.clearTimeout(successTimerRef.current);
+      }
+      successTimerRef.current = window.setTimeout(() => {
+        setSaveSuccess(false);
+        successTimerRef.current = null;
+      }, 3000);
     } catch (err) {
       console.error("Failed to save personal info:", err);
       setSaveError(err.message || "Failed to save. Please try again.");

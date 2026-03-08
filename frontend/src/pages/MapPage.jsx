@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import * as api from "../api/client";
 import { config } from "../config";
+import { useHomeAnnouncement } from "../hooks/useHomeAnnouncement";
+import { getAnnouncementSessionState, markAnnouncementSeen } from "../utils/announcementSession";
 import { getStationDisplayName, getStationAddress } from "../utils/stationNames";
 import { StationMap } from "../components/StationMap";
 import { StationBottomSheet } from "../components/StationBottomSheet";
@@ -17,6 +19,8 @@ export function MapPage() {
   const [selectedStation, setSelectedStation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const mapRef = useRef(null);
+  const announcement = useHomeAnnouncement();
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
 
   /** Squared distance (for ordering only) from user to station */
   const distanceSq = (s) => {
@@ -55,6 +59,27 @@ export function MapPage() {
   useEffect(() => {
     loadStations();
   }, [loadStations]);
+
+  useEffect(() => {
+    if (!announcement.enabled || (!announcement.title && !announcement.message)) {
+      setShowAnnouncement(false);
+      return undefined;
+    }
+
+    const { dismissed, seen } = getAnnouncementSessionState(announcement);
+    if (dismissed || seen) {
+      setShowAnnouncement(false);
+      return undefined;
+    }
+
+    setShowAnnouncement(true);
+    markAnnouncementSeen(announcement);
+    const timer = window.setTimeout(() => {
+      setShowAnnouncement(false);
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [announcement]);
 
   useEffect(() => {
     if (searchExpanded) searchInputRef.current?.focus();
@@ -179,6 +204,49 @@ export function MapPage() {
           </p>
         )}
       </div>
+
+      {showAnnouncement && announcement.enabled && (announcement.title || announcement.message) && (
+        <div className="absolute top-20 left-4 right-4 z-10">
+          <div className="rounded-2xl border border-white/40 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-4 py-3 shadow-lg">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                {announcement.badge && (
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                    {announcement.badge}
+                  </p>
+                )}
+                {announcement.title && (
+                  <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
+                    {announcement.title}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAnnouncement(false)}
+                className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Dismiss announcement"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            {announcement.message && (
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                {announcement.message}
+              </p>
+            )}
+            {announcement.ctaLabel && announcement.ctaPath && (
+              <button
+                type="button"
+                onClick={() => navigate(announcement.ctaPath)}
+                className="mt-3 text-sm font-semibold text-primary hover:underline"
+              >
+                {announcement.ctaLabel}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Find station and Scan buttons at bottom of screen */}
       <div className="fixed bottom-6 left-0 right-0 z-20 px-4 flex gap-3">

@@ -206,16 +206,18 @@ export async function adminUpdatePricing(unlockFeeCents, centsPerMinute) {
 }
 
 /**
+ * @param {string} contentKey
  * @returns {Promise<{ key: string, document: object, updatedAt: string|null, updatedBy: string|null, source: string }>}
  */
-export async function adminGetTermsContent() {
-  return adminRequest("GET", "/api/admin/content/terms");
+export async function adminGetContent(contentKey) {
+  return adminRequest("GET", `/api/admin/content/${encodeURIComponent(contentKey)}`);
 }
 
 /**
+ * @param {string} contentKey
  * @param {object} document
  * @returns {Promise<{ key: string, document: object, updatedAt: string|null, updatedBy: string|null, source: string }>}
  */
-export async function adminUpdateTermsContent(document) {
-  return adminRequest("PUT", "/api/admin/content/terms", { document });
+export async function adminUpdateContent(contentKey, document) {
+  return adminRequest("PUT", `/api/admin/content/${encodeURIComponent(contentKey)}`, { document });
 }

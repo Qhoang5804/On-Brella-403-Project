@@ -8,6 +8,12 @@ const { createMockRentalStore } = require("./mockRentalStore");
 const mockStore = createMockRentalStore();
 jest.mock("../src/store/getRentalStore", () => () => mockStore);
 
+jest.mock("../src/db", () => ({
+  getPool: jest.fn(() => null),
+  healthCheck: jest.fn(async () => false),
+  query: jest.fn(),
+}));
+
 // bypass admin auth for tests
 jest.mock("../src/middleware/requireAdmin", () => ({
   requireAdmin: (_req, _res, next) => next(),
@@ -20,6 +26,7 @@ jest.mock("../src/db/config", () => ({
 }));
 
 jest.mock("../src/db/stations", () => ({
+  listStations: jest.fn().mockResolvedValue([]),
   upsertStation: jest.fn().mockResolvedValue(),
   getByStationId: jest.fn().mockResolvedValue({ num_brellas: 7 }),
   decrementNumBrellas: jest.fn().mockResolvedValue(),

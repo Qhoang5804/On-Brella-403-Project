@@ -41,15 +41,25 @@ export function AdminInventoryPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    Promise.all([
-      loadStations(),
-      adminGetPricing().catch(() => ({ unlockFeeCents: 100, centsPerMinute: 10 })),
-    ])
-      .then(([_, pricingRes]) => {
-        if (!cancelled) setPricing(pricingRes);
-      })
-      .catch((e) => {
-        if (!cancelled) setError(e.message || "Failed to load inventory");
+    setPricingError(null);
+
+    Promise.allSettled([loadStations(), adminGetPricing()])
+      .then(([stationsResult, pricingResult]) => {
+        if (cancelled) return;
+
+        if (stationsResult.status === "rejected") {
+          setError(stationsResult.reason?.message || "Failed to load inventory");
+        }
+
+        if (pricingResult.status === "fulfilled") {
+          setPricing(pricingResult.value);
+        } else {
+          setPricingError(
+            pricingResult.reason?.message ||
+              "Failed to load pricing from the backend. Showing the local default values."
+          );
+          setPricing({ unlockFeeCents: 100, centsPerMinute: 10 });
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

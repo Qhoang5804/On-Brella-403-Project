@@ -57,7 +57,7 @@ describe("UserContext", () => {
     mockFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
-          single: () =>
+          maybeSingle: () =>
             Promise.resolve({
               data: { id: "uid", full_name: "Alice", email: "u@x.com", bio: "", avatar_url: null },
               error: null,

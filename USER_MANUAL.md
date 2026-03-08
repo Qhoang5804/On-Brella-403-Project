@@ -30,9 +30,7 @@ On-Brella supports the following features:
 
 ## How to install the software:
 
-No installation is required.
-
-No installation is needed. On-Brella is a web-based app that can be accessed on a web browser through a URL.
+No local installation is required for end users. On-Brella is a web application that runs in a browser.
 
 ### Requirements
 
@@ -46,10 +44,10 @@ No installation is needed. On-Brella is a web-based app that can be accessed on 
 ## How to Run On-Brella
 
 1. Open a supported web browser.
-2. Navigate to the On-Brella URL: [Placeholder]
+2. Navigate to the On-Brella deployment URL provided by your team or instructor.
 3. Allow access to requested permissions (location and camera)
 
-The homepage will load from here. Users can then make an account or login and begin renting and returning umbrellas.
+The homepage will load from here. Users can then create an account or log in and begin renting and returning umbrellas.
 
 ---
 
@@ -73,9 +71,15 @@ Renting an Umbrella:
 
 Returning an Umbrella:
 
-1. Upon reaching the destination, a user may put the umbrella back in the station
+1. Upon reaching the destination, place the umbrella back in a station slot.
 2. Once the umbrella is back in the station, the user may press the return button on the active page.
-3. When the return is successful, the user will be greeted with a thank you page and the amount of money charged for their trip (still a WIP).
+3. When the return is successful, the user will be taken to a thank-you page with the rental summary.
+
+Help, Support, and Notifications:
+
+1. Open **Profile** to access account-related pages.
+2. Use **Notifications** to review service announcements published by the admin team.
+3. Use **Help & Support** to review FAQs, terms, privacy information, or submit a complaint.
 
 ---
 
@@ -101,7 +105,7 @@ To help our team solve the issue, include:
 
 ### Known Bugs:
 
-- The "Thank You" page may not always appear after successfully returning an umbrella.
+- Camera, geolocation, or backend connectivity issues can interrupt rent/return flows on some devices or local setups.
 
 ## Admin Pricing Settings
 

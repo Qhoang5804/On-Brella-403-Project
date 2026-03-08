@@ -5,12 +5,12 @@ import { AdminDashboardPage } from "../src/pages/admin/AdminDashboardPage";
 
 // mock api calls
 const mockStats = vi.fn();
-const mockActivity = vi.fn();
+const mockTrends = vi.fn();
 const mockStations = vi.fn();
 
 vi.mock("../src/api/adminClient", () => ({
   adminGetStats: (...args) => mockStats(...args),
-  adminGetActivity: (...args) => mockActivity(...args),
+  adminGetRentalTrends: (...args) => mockTrends(...args),
   adminGetStations: (...args) => mockStations(...args),
 }));
 
@@ -22,7 +22,7 @@ vi.mock("../src/utils/stationNames", () => ({
 describe("AdminDashboardPage", () => {
   beforeEach(() => {
     mockStats.mockResolvedValue({ activeSessions: 0, openReportsCount: 0 });
-    mockActivity.mockResolvedValue({ activities: [] });
+    mockTrends.mockResolvedValue({ buckets: [] });
     mockStations.mockResolvedValue({ stations: [] });
   });
 

@@ -12,8 +12,10 @@ import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { HelpSupportPage } from "./pages/HelpSupportPage";
 import { preloadStationData } from "./utils/stationNames";
 import { HistoryPage } from "./pages/HistoryPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { SubmitComplaintPage } from "./pages/SubmitComplaintPage";
 import { TermsPage } from "./pages/TermsPage";
+import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
 import LoginPage from "./pages/Login";
 import SignUpPage from "./pages/SignUp";
 import ForgotPasswordPage from "./pages/ForgotPassword";
@@ -145,7 +147,7 @@ function App() {
               path="/profile/notifications"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage title="Notification Settings" />
+                  <NotificationsPage />
                 </ProtectedRoute>
               }
             />
@@ -170,6 +172,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <TermsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/help/privacy"
+              element={
+                <ProtectedRoute>
+                  <PrivacyPolicyPage />
                 </ProtectedRoute>
               }
             />

@@ -3,6 +3,7 @@
  */
 const express = require("express");
 const db = require("../db");
+const configDb = require("../db/config");
 const reportLogic = require("../businessLogic/reportLogic");
 const config = require("../config");
 const getRentalStore = require("../store/getRentalStore");
@@ -302,8 +303,53 @@ router.delete("/stations/:stationId", async (req, res, next) => {
     if (err.message?.includes("Database not configured")) {
       return res.status(503).json({ error: err.message });
     }
+  }
+});
+
+/**
+ * GET /api/admin/pricing — Get current pricing settings.
+ */
+router.get("/pricing", async (req, res, next) => {
+  try {
+    const unlockFeeCents = await configDb.get("unlockFeeCents") || "100";
+    const centsPerMinute = await configDb.get("centsPerMinute") || "10";
+    res.json({
+      unlockFeeCents: parseInt(unlockFeeCents, 10),
+      centsPerMinute: parseInt(centsPerMinute, 10),
+    });
+  } catch (err) {
     next(err);
   }
 });
+
+/**
+ * PUT /api/admin/pricing — Update pricing settings.
+ * Body: { unlockFeeCents (number), centsPerMinute (number) }
+ */
+router.put(
+  "/pricing",
+  requireJsonContentType,
+  requireBody,
+  requireFields("unlockFeeCents", "centsPerMinute"),
+  async (req, res, next) => {
+    try {
+      const { unlockFeeCents, centsPerMinute } = req.body;
+      if (!Number.isInteger(unlockFeeCents) || unlockFeeCents < 0) {
+        return res.status(400).json({ error: "unlockFeeCents must be a non-negative integer" });
+      }
+      if (!Number.isInteger(centsPerMinute) || centsPerMinute < 0) {
+        return res.status(400).json({ error: "centsPerMinute must be a non-negative integer" });
+      }
+      await configDb.set("unlockFeeCents", String(unlockFeeCents));
+      await configDb.set("centsPerMinute", String(centsPerMinute));
+      res.json({
+        unlockFeeCents,
+        centsPerMinute,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 module.exports = router;

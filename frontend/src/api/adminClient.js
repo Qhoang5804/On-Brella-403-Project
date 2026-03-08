@@ -175,3 +175,21 @@ export async function adminUpdateStation(stationId, payload) {
 export async function adminDeleteStation(stationId) {
   return adminRequest("DELETE", `/api/admin/stations/${encodeURIComponent(stationId)}`);
 }
+
+/**
+ * Get current pricing settings from the backend.
+ * @returns {Promise<{unlockFeeCents: number, centsPerMinute: number}>}
+ */
+export async function adminGetPricing() {
+  return adminRequest("GET", "/api/admin/pricing");
+}
+
+/**
+ * Update pricing settings in the backend.
+ * @param {number} unlockFeeCents
+ * @param {number} centsPerMinute
+ * @returns {Promise<{unlockFeeCents: number, centsPerMinute: number}>}
+ */
+export async function adminUpdatePricing(unlockFeeCents, centsPerMinute) {
+  return adminRequest("PUT", "/api/admin/pricing", { unlockFeeCents, centsPerMinute });
+}

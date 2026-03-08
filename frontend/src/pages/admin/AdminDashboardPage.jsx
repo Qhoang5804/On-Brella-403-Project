@@ -17,6 +17,19 @@ export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const handleSavePricing = async (newPricing) => {
+    setPricingError(null);
+    setPricingLoading(true);
+    try {
+      const updated = await adminUpdatePricing(newPricing.unlockFeeCents, newPricing.centsPerMinute);
+      setPricing(updated);
+    } catch (err) {
+      setPricingError(err.message || "Failed to save pricing");
+    } finally {
+      setPricingLoading(false);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -65,6 +78,7 @@ export function AdminDashboardPage() {
           address: getStationAddress(s.stationId),
         }));
         setLocations(locs);
+        // note: pricing already set above
       } catch (e) {
         if (!cancelled) setError(e.message || "Failed to load dashboard");
       } finally {

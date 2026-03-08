@@ -10,6 +10,12 @@ const { createMockRentalStore } = require("./mockRentalStore");
 const mockStore = createMockRentalStore();
 jest.mock("../src/store/getRentalStore", () => () => mockStore);
 
+// mock pricing config access
+jest.mock("../src/db/config", () => ({
+  get: jest.fn().mockResolvedValue("100"),
+  set: jest.fn(),
+}));
+
 jest.mock("../src/services/hardwareClient", () => ({
   getStations: (...args) => mockGetStations(...args),
   unlock: (...args) => mockUnlock(...args),
@@ -107,6 +113,8 @@ describe("rentalService.endRental", () => {
     expect(mockReturnUmbrella).toHaveBeenCalledWith("station-002", 3, start.umbrellaId);
     expect(result.success).toBe(true);
     expect(result.endTime).toBeDefined();
+    expect(result.costCents).toBeGreaterThanOrEqual(100);
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
   });
 
   test("throws 404 when rental not found", async () => {

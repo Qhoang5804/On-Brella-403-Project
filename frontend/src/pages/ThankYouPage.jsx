@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRental } from "../context/RentalContext";
 import { formatDurationMs } from "../utils/duration";
-import { formatCost, computeRentalCostCents } from "../utils/cost";
+import { formatCost } from "../utils/cost";
 import { getStationDisplayName } from "../utils/stationNames";
 
 export function ThankYouPage() {
@@ -21,7 +21,7 @@ export function ThankYouPage() {
   if (!lastReturnSummary) return null;
 
   const durationFormatted = formatDurationMs(lastReturnSummary.durationMs);
-  const costCents = computeRentalCostCents(lastReturnSummary.durationMs);
+  const costCents = lastReturnSummary.costCents;
   const pickUpName = getStationDisplayName(lastReturnSummary.pickUpStationId);
   const returnName = getStationDisplayName(lastReturnSummary.returnStationId);
 

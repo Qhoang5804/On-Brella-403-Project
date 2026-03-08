@@ -5,9 +5,11 @@ import {
   adminUpdateStationStatus,
   adminUpdateStation,
   adminDeleteStation,
+  adminGetPricing,
+  adminUpdatePricing,
 } from "../../api/adminClient";
 import { getStationDisplayName } from "../../utils/stationNames";
-import { AddStationForm, StationStatusModal, StationEditModal } from "../../components/admin";
+import { AddStationForm, StationStatusModal, StationEditModal, PricingCard } from "../../components/admin";
 
 const NON_OPERATIONAL_STATUSES = ["out_of_service", "maintenance"];
 
@@ -21,6 +23,9 @@ export function AdminInventoryPage() {
   const [statusSubmitting, setStatusSubmitting] = useState(false);
   const [stationForEdit, setStationForEdit] = useState(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
+  const [pricing, setPricing] = useState({ unlockFeeCents: 0, centsPerMinute: 0 });
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingError, setPricingError] = useState(null);
 
   const loadStations = useCallback(() => {
     return adminGetStations()
@@ -31,7 +36,16 @@ export function AdminInventoryPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    loadStations()
+    Promise.all([
+      loadStations(),
+      adminGetPricing().catch(() => ({ unlockFeeCents: 100, centsPerMinute: 10 })),
+    ])
+      .then(([_, pricingRes]) => {
+        if (!cancelled) setPricing(pricingRes);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e.message || "Failed to load inventory");
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -92,6 +106,19 @@ export function AdminInventoryPage() {
     loadStations();
   }, [stationForEdit, loadStations]);
 
+  const handleSavePricing = async (newPricing) => {
+    setPricingError(null);
+    setPricingLoading(true);
+    try {
+      const updated = await adminUpdatePricing(newPricing.unlockFeeCents, newPricing.centsPerMinute);
+      setPricing(updated);
+    } catch (err) {
+      setPricingError(err.message || "Failed to save pricing");
+    } finally {
+      setPricingLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -146,6 +173,13 @@ export function AdminInventoryPage() {
           </span>
         </div>
       </div>
+
+      <PricingCard
+        pricing={pricing}
+        onSave={handleSavePricing}
+        saving={pricingLoading}
+        error={pricingError}
+      />
 
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-slate-800 dark:text-white px-1">

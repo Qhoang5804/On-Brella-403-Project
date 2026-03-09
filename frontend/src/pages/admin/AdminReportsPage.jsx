@@ -3,6 +3,12 @@ import { useSearchParams } from "react-router-dom";
 import { adminGetReports, adminResolveReport } from "../../api/adminClient";
 import { getStationDisplayName } from "../../utils/stationNames";
 
+function formatDate(ts) {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 function formatTimeAgo(ts) {
   if (ts == null) return "—";
   const d = new Date(ts);
@@ -13,6 +19,10 @@ function formatTimeAgo(ts) {
   const h = Math.floor(diff / 60);
   if (h < 24) return `${h}h ago`;
   return formatDate(ts);
+}
+
+function formatReporter(report) {
+  return report.userFullName || report.userEmail || "Unknown user";
 }
 
 const TAB_CRITICAL = "critical";
@@ -57,15 +67,20 @@ export function AdminReportsPage() {
     () => reports.filter((r) => r.status === "open"),
     [reports]
   );
+  const criticalReports = useMemo(
+    () => openReports.filter((r) => (r.severity || "critical") === "critical"),
+    [openReports]
+  );
   const resolvedReports = useMemo(
     () => reports.filter((r) => r.status === "resolved"),
     [reports]
   );
 
   const filtered = useMemo(() => {
-    if (tab === TAB_CRITICAL || tab === TAB_PENDING) return openReports;
+    if (tab === TAB_CRITICAL) return criticalReports;
+    if (tab === TAB_PENDING) return openReports;
     return resolvedReports;
-  }, [tab, openReports, resolvedReports]);
+  }, [tab, criticalReports, openReports, resolvedReports]);
 
   const handleResolve = async (id) => {
     setResolvingId(id);
@@ -99,7 +114,7 @@ export function AdminReportsPage() {
               : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
           }`}
         >
-          Critical Only ({openReports.length})
+          Critical Only ({criticalReports.length})
         </button>
         <button
           type="button"
@@ -133,9 +148,15 @@ export function AdminReportsPage() {
 
       {tab !== TAB_RESOLVED && openReports.length > 0 && (
         <div className="py-2">
-          <p className="text-[11px] font-bold text-rose-500 uppercase tracking-widest flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-rose-500" /> Urgent Action Required
-          </p>
+          {tab === TAB_CRITICAL ? (
+            <p className="text-[11px] font-bold text-rose-500 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500" /> Urgent Action Required
+            </p>
+          ) : (
+            <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500" /> Open Issues
+            </p>
+          )}
         </div>
       )}
 
@@ -147,13 +168,16 @@ export function AdminReportsPage() {
         <div className="space-y-4">
           {filtered.map((r) => {
             const isOpen = r.status === "open";
-            const isCritical = isOpen;
+            const isCritical = isOpen && (r.severity || "critical") === "critical";
+            const isNonCriticalOpen = isOpen && !isCritical;
             return (
               <div
                 key={r.id}
                 className={`rounded-2xl p-4 border flex gap-4 items-start ${
                   isCritical
                     ? "bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/40 ring-1 ring-rose-200 dark:ring-rose-900/20"
+                    : isNonCriticalOpen
+                      ? "bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30 ring-1 ring-amber-200 dark:ring-amber-900/20"
                     : "bg-white dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 shadow-sm"
                 }`}
               >
@@ -161,30 +185,42 @@ export function AdminReportsPage() {
                   className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                     isCritical
                       ? "bg-rose-100 dark:bg-rose-900/50 shadow-sm"
-                      : "bg-purple-100 dark:bg-purple-900/30"
+                      : isNonCriticalOpen
+                        ? "bg-amber-100 dark:bg-amber-900/30"
+                        : "bg-purple-100 dark:bg-purple-900/30"
                   }`}
                 >
                   <span
                     className={`material-symbols-outlined font-bold ${
                       isCritical
                         ? "text-rose-600 dark:text-rose-400"
-                        : "text-purple-600 dark:text-purple-400"
+                        : isNonCriticalOpen
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-purple-600 dark:text-purple-400"
                     }`}
                   >
-                    {isCritical ? "report" : "build"}
+                    {isCritical ? "report" : isNonCriticalOpen ? "pending_actions" : "build"}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start gap-2">
                     <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {typeof r.message === "string" && r.message.length > 0
+                      {typeof r.reasonLabel === "string" && r.reasonLabel.length > 0
+                        ? r.reasonLabel
+                        : typeof r.message === "string" && r.message.length > 0
                         ? r.message
                         : `Report #${r.id}`}
                     </p>
                     {isOpen ? (
-                      <span className="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold uppercase shrink-0">
-                        Critical
-                      </span>
+                      isCritical ? (
+                        <span className="text-[10px] bg-rose-600 text-white px-1.5 py-0.5 rounded font-bold uppercase shrink-0">
+                          Critical
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold uppercase shrink-0">
+                          Open
+                        </span>
+                      )
                     ) : (
                       <span className="text-[10px] text-slate-400 font-medium shrink-0">
                         {formatTimeAgo(r.resolvedAt)}
@@ -195,23 +231,31 @@ export function AdminReportsPage() {
                     {r.stationId
                       ? `Station: ${getStationDisplayName(r.stationId)}`
                       : `Alert ID: #${r.id}`}
-                    {r.message && r.stationId ? ` • ${r.message}` : ""}
+                    {r.createdAt ? ` • Submitted ${formatTimeAgo(r.createdAt)}` : ""}
                   </p>
+                  {(r.userFullName || r.userEmail) && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Reported by {formatReporter(r)}
+                    </p>
+                  )}
+                  {r.details && (
+                    <p className="text-sm text-slate-700 dark:text-slate-300 mt-2 whitespace-pre-wrap">
+                      {r.details}
+                    </p>
+                  )}
                   {isOpen && (
                     <div className="flex gap-2 mt-3">
                       <button
                         type="button"
                         disabled={resolvingId === r.id}
                         onClick={() => handleResolve(r.id)}
-                        className="text-[11px] font-bold bg-rose-600 text-white px-3 py-1.5 rounded-lg hover:bg-rose-700 disabled:opacity-50"
+                        className={`text-[11px] font-bold text-white px-3 py-1.5 rounded-lg disabled:opacity-50 ${
+                          isCritical
+                            ? "bg-rose-600 hover:bg-rose-700"
+                            : "bg-amber-500 hover:bg-amber-600"
+                        }`}
                       >
                         {resolvingId === r.id ? "Resolving…" : "Resolve"}
-                      </button>
-                      <button
-                        type="button"
-                        className="text-[11px] font-bold bg-white border border-rose-200 text-rose-700 px-3 py-1.5 rounded-lg dark:bg-transparent dark:border-rose-800 dark:text-rose-300"
-                      >
-                        View Logs
                       </button>
                     </div>
                   )}

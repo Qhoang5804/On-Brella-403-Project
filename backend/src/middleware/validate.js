@@ -2,9 +2,9 @@
  * Request validation helpers. Returns 400 for bad input.
  */
 
-/** Require Content-Type: application/json for POST body parsing. Use before requireBody. */
+/** Require JSON bodies for write requests. Use before requireBody. */
 function requireJsonContentType(req, res, next) {
-  if (req.method !== "POST") return next();
+  if (!["POST", "PUT", "PATCH"].includes(req.method)) return next();
   const ct = (req.headers["content-type"] || "").trim().toLowerCase();
   if (!ct || !ct.includes("application/json")) {
     return res.status(400).json({

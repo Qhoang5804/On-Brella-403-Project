@@ -114,6 +114,17 @@ export async function adminGetActivity(limit = 50) {
 }
 
 /**
+ * @param {number} [hours=24]
+ * @returns {Promise<{ hours: number, buckets: Array<{ bucketStart: string, count: number }> }>}
+ */
+export async function adminGetRentalTrends(hours = 24) {
+  return adminRequest(
+    "GET",
+    `/api/admin/trends?hours=${Math.min(168, Math.max(1, Number(hours) || 24))}`
+  );
+}
+
+/**
  * @returns {Promise<{ reports: Array }>}
  */
 export async function adminGetReports() {
@@ -192,4 +203,21 @@ export async function adminGetPricing() {
  */
 export async function adminUpdatePricing(unlockFeeCents, centsPerMinute) {
   return adminRequest("PUT", "/api/admin/pricing", { unlockFeeCents, centsPerMinute });
+}
+
+/**
+ * @param {string} contentKey
+ * @returns {Promise<{ key: string, document: object, updatedAt: string|null, updatedBy: string|null, source: string }>}
+ */
+export async function adminGetContent(contentKey) {
+  return adminRequest("GET", `/api/admin/content/${encodeURIComponent(contentKey)}`);
+}
+
+/**
+ * @param {string} contentKey
+ * @param {object} document
+ * @returns {Promise<{ key: string, document: object, updatedAt: string|null, updatedBy: string|null, source: string }>}
+ */
+export async function adminUpdateContent(contentKey, document) {
+  return adminRequest("PUT", `/api/admin/content/${encodeURIComponent(contentKey)}`, { document });
 }

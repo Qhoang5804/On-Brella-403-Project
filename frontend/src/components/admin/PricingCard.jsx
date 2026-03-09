@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Card with form to view/update pricing settings.
@@ -12,6 +12,11 @@ export function PricingCard({ pricing = {}, onSave, saving = false, error }) {
   const [unlockFee, setUnlockFee] = useState(pricing.unlockFeeCents || 0);
   const [perMinute, setPerMinute] = useState(pricing.centsPerMinute || 0);
 
+  useEffect(() => {
+    setUnlockFee(pricing.unlockFeeCents || 0);
+    setPerMinute(pricing.centsPerMinute || 0);
+  }, [pricing.unlockFeeCents, pricing.centsPerMinute]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (onSave) {
@@ -21,7 +26,12 @@ export function PricingCard({ pricing = {}, onSave, saving = false, error }) {
 
   return (
     <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-      <h3 className="font-bold text-sm text-slate-800 dark:text-white mb-4">Pricing</h3>
+      <div className="mb-4">
+        <h3 className="font-bold text-sm text-slate-800 dark:text-white">Pricing</h3>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Saved in the backend config table and used for future rental returns.
+        </p>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="unlock-fee" className="block text-xs font-medium text-slate-500 dark:text-slate-400">

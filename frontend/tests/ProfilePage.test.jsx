@@ -31,7 +31,7 @@ describe("ProfilePage", () => {
       </MemoryRouter>
     );
     expect(screen.getByText(/Back to map/)).toBeInTheDocument();
-    expect(screen.getByText("Test User")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Hey, Test User/i })).toBeInTheDocument();
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
   });
 

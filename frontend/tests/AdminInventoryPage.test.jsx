@@ -77,4 +77,21 @@ describe("AdminInventoryPage", () => {
       expect(mockUpdatePricing).toHaveBeenCalledWith(250, 10);
     });
   });
+
+  it("shows a pricing error when the backend pricing load fails", async () => {
+    mockGetPricing.mockRejectedValueOnce(new Error("Pricing endpoint unavailable"));
+
+    render(
+      <MemoryRouter>
+        <AdminInventoryPage />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Pricing endpoint unavailable/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText(/Unlock fee/i).value).toBe("100");
+    expect(screen.getByLabelText(/Per-minute charge/i).value).toBe("10");
+  });
 });

@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
-import { adminGetActivity } from "../../api/adminClient";
-import { adminGetReports } from "../../api/adminClient";
+import { adminGetActivity, adminGetReports, adminGetRentalTrends } from "../../api/adminClient";
+import { RentalTrendsCard } from "../../components/admin";
 import { getStationDisplayName } from "../../utils/stationNames";
 
 const FILTER_ALL = "all";
 const FILTER_RENTALS = "rentals";
-const FILTER_MAINTENANCE = "maintenance";
 const FILTER_ALERTS = "alerts";
 
 function formatTimeAgo(iso) {
@@ -46,6 +45,7 @@ function formatDateHeader(iso) {
 export function AdminActivityPage() {
   const [activities, setActivities] = useState([]);
   const [reports, setReports] = useState([]);
+  const [trendBuckets, setTrendBuckets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState(FILTER_ALL);
@@ -53,12 +53,14 @@ export function AdminActivityPage() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [actRes, repRes] = await Promise.all([
+      const [actRes, repRes, trendRes] = await Promise.all([
         adminGetActivity(50).catch(() => ({ activities: [] })),
         adminGetReports().catch(() => ({ reports: [] })),
+        adminGetRentalTrends(24).catch(() => ({ buckets: [] })),
       ]);
       setActivities(actRes.activities || []);
       setReports(repRes.reports || []);
+      setTrendBuckets(trendRes.buckets || []);
     } catch (e) {
       setError(e.message || "Failed to load");
     } finally {
@@ -107,13 +109,17 @@ export function AdminActivityPage() {
         id: `report-${r.id}`,
         type: "report",
         time: r.createdAt,
-        title: r.message || `Report #${r.id}`,
-        subtitle: r.stationId ? `Station: ${getStationDisplayName(r.stationId)}` : "",
+        title: r.reasonLabel || r.message || `Report #${r.id}`,
+        subtitle: r.stationId
+          ? `Station: ${getStationDisplayName(r.stationId)}`
+          : r.details || "",
         status: r.status,
+        source: r.source || "legacy_report",
+        severity: r.severity || "critical",
         icon: r.status === "open" ? "error" : "build",
         iconBg: r.status === "open" ? "bg-rose-100 dark:bg-rose-900/30" : "bg-purple-100 dark:bg-purple-900/30",
         iconColor: r.status === "open" ? "text-rose-600 dark:text-rose-400" : "text-purple-600 dark:text-purple-400",
-        isCritical: r.status === "open",
+        isCritical: r.status === "open" && (r.severity || "critical") === "critical",
       });
     });
     items.sort((a, b) => new Date(b.time) - new Date(a.time));
@@ -123,8 +129,11 @@ export function AdminActivityPage() {
   const filteredItems = useMemo(() => {
     if (filter === FILTER_ALL) return feedItems;
     if (filter === FILTER_RENTALS) return feedItems.filter((i) => i.type === "rent" || i.type === "return");
-    if (filter === FILTER_MAINTENANCE || filter === FILTER_ALERTS)
-      return feedItems.filter((i) => i.type === "report");
+    if (filter === FILTER_ALERTS) {
+      return feedItems.filter(
+        (i) => i.type === "report" && i.source === "support_request"
+      );
+    }
     return feedItems;
   }, [feedItems, filter]);
 
@@ -184,17 +193,6 @@ export function AdminActivityPage() {
         </button>
         <button
           type="button"
-          onClick={() => setFilter(FILTER_MAINTENANCE)}
-          className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${
-            filter === FILTER_MAINTENANCE
-              ? "bg-uw-primary text-white"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-          }`}
-        >
-          Maintenance
-        </button>
-        <button
-          type="button"
           onClick={() => setFilter(FILTER_ALERTS)}
           className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${
             filter === FILTER_ALERTS
@@ -206,11 +204,19 @@ export function AdminActivityPage() {
         </button>
       </div>
 
-      {grouped.length === 0 ? (
+      {filter === FILTER_RENTALS && (
+        <RentalTrendsCard
+          buckets={trendBuckets}
+          title="Rental Trends"
+          periodLabel="Last 24 Hours"
+        />
+      )}
+
+      {grouped.length === 0 && filter !== FILTER_RENTALS ? (
         <div className="py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
           No activity to display.
         </div>
-      ) : (
+      ) : grouped.length > 0 ? (
         grouped.map(({ dateKey, label, items }) => (
           <div key={dateKey} className="space-y-3">
             <div className="sticky top-0 z-30 py-2 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm">
@@ -257,7 +263,7 @@ export function AdminActivityPage() {
             ))}
           </div>
         ))
-      )}
+      ) : null}
 
       <div className="pt-10 pb-4 flex justify-center">
         <div className="w-32 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />

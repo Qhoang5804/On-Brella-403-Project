@@ -15,4 +15,27 @@ describe("PricingCard", () => {
 
     expect(onSave).toHaveBeenCalledWith({ unlockFeeCents: 150, centsPerMinute: 10 });
   });
+
+  it("syncs the form when the pricing prop changes", () => {
+    const { rerender } = render(
+      <PricingCard
+        pricing={{ unlockFeeCents: 100, centsPerMinute: 10 }}
+        onSave={vi.fn()}
+        saving={false}
+        error={null}
+      />
+    );
+
+    rerender(
+      <PricingCard
+        pricing={{ unlockFeeCents: 250, centsPerMinute: 25 }}
+        onSave={vi.fn()}
+        saving={false}
+        error={null}
+      />
+    );
+
+    expect(screen.getByLabelText(/Unlock fee/i).value).toBe("250");
+    expect(screen.getByLabelText(/Per-minute charge/i).value).toBe("25");
+  });
 });

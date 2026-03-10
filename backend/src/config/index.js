@@ -11,6 +11,10 @@ const config = {
   /** Supabase URL and service role key for admin JWT verification (optional). */
   supabaseUrl: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  /** Stripe configuration (used for rental payments). */
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY || "",
 };
+
+
 
 module.exports = config;

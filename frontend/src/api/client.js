@@ -101,4 +101,17 @@ export async function getRentalHistory({ limit = 20, offset = 0 } = {}) {
   return request("GET", path);
 }
 
+/**
+ * Create a Stripe PaymentIntent for a completed rental.
+ *
+ * The backend calculates the final rental amount using the rental record
+ * and returns the clientSecret needed by Stripe Elements on the frontend.
+ *
+ * @param {string} rentalId
+ * @returns {Promise<{ paymentIntentId: string, clientSecret: string, amount: number, currency: string, status: string }>}
+ */
+export async function createCheckoutSession(rentalId) {
+  return request("POST", "/api/payments/create-checkout-session", { rentalId });
+}
+
 export { getSessionId };

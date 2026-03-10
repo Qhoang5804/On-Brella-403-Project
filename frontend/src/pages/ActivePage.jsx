@@ -201,17 +201,10 @@ export function ActivePage() {
           </div>
           <button
             type="button"
-            onClick={async () => {
+            onClick={() => {
               if (status === "loading") return;
               setError(null);
-              setStatus("loading");
-              try {
-                await endRental(activeRental.stationId, 0);
-                navigate("/thank-you", { replace: true });
-              } catch (e) {
-                setError(e?.message || "Failed to return umbrella");
-                setStatus("idle");
-              }
+              navigate("/scan/return");
             }}
             disabled={status === "loading"}
             className="w-full bg-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none"

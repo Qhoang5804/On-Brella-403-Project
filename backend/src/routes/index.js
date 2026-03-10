@@ -11,6 +11,7 @@ const historyRouter = require("./history");
 const adminRouter = require("./admin");
 const supportRouter = require("./support");
 const contentRouter = require("./content");
+const paymentsRouter = require("./payments");
 
 const router = express.Router();
 
@@ -21,5 +22,6 @@ router.use("/history", historyRouter);
 router.use("/support", supportRouter);
 router.use("/content", contentRouter);
 router.use("/admin", requireAdmin, adminRouter);
+router.use("/payments", paymentsRouter);
 
 module.exports = router;

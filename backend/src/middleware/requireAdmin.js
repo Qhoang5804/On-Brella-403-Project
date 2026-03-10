@@ -92,4 +92,4 @@ async function requireAdmin(req, res, next) {
   }
 }
 
-module.exports = { requireAdmin };
+module.exports = { requireAdmin, getSupabase };

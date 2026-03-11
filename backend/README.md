@@ -1,8 +1,24 @@
 # On-Brella Backend
 
-REST API for umbrella rental. Modular, extensible structure.
+Backend REST API for On-Brella umbrella rental system. Modular, extensible structure.
 
-## Structure
+This service handles:
+- rental and return API requests
+- station data requests
+- rental history
+- database-backed persistence through Supabase Postgres
+- admin/auth-related verification through Supabase server-side credentials
+
+## Tech Stack
+
+- Node.js
+- Express
+- Supabase
+- Postgres
+- Jest
+- Supertest
+
+## Project Structure
 
 ```
 src/
@@ -31,7 +47,7 @@ src/
 ## Run
 
 ```bash
-# From project root
+cd backend
 npm install
 npm start
 ```
@@ -40,29 +56,43 @@ Server runs on port **5001** by default (or `PORT` env var). Port 5000 is avoide
 
 ## Database (Supabase)
 
-The backend connects to **Supabase (Postgres)** when `DATABASE_URL` is set. The database layer is used only by the business layer, never by the frontend.
+The backend uses **Supabase Postgres** for persistence. The primary database environment variable is:
+
+```env
+DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+```
+
+`SUPABASE_DATABASE_URL` is supported only as a legacy fallback for backward compatibility. New setups should use `DATABASE_URL`.
 
 **Setup**
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **Project Settings → Database**, copy the **Connection string (URI)**. Use **Transaction** mode and replace `[YOUR-PASSWORD]` with your database password.
-3. In the backend folder, copy `.env.example` to `.env` and set:
+2. In **Project Settings → Database**, copy the **Connection string (URI)**.
+3. Use **Transaction** mode and replace `[YOUR-PASSWORD]` with your database password.
+4. In the `backend/` folder, copy `.env.example` to `.env`.
+5. Set:
    ```env
    DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+   SUPABASE_URL=https://your-project-ref.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
-4. Ensure your Supabase project has the expected tables (`stations`, `umbrellas`, `user`, `rentals`). The file `src/db/schema.sql` is reference only (tables are already in Supabase).
+Ensure your Supabase project has the expected tables (`stations`, `umbrellas`, `user`, `rentals`). SQL reference and setup files are located in the top-level `docs/` folder.
 
 **Health check:** `GET /health` returns `{ status: "ok", database: "connected" }` when the DB is reachable.
 
-**POST /api/rent** and **POST /api/return** persist to the `rentals` table. `DATABASE_URL` is required to run the backend.
+**POST /api/rent** and **POST /api/return** persist to the `rentals` table. `DATABASE_URL` is required for database-backed features.
 
 ## Environment
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| PORT | 5001 | Server port |
-| HARDWARE_URL | http://localhost:3000 | Hardware mock URL |
-| DATABASE_URL | — | Supabase/Postgres connection URI (required) |
+| Variable | Default | Required | Description |
+|----------|---------|----------|-------------|
+| PORT | 5001 | No | Server port |
+| HARDWARE_URL | http://localhost:3000 | No | Hardware mock URL |
+| DATABASE_URL | — | Yes | Primary Supabase/Postgres connection URI |
+| SUPABASE_DATABASE_URL | — | No | Legacy fallback for database URI; keep only for backward compatibility |
+| SUPABASE_URL | — | Yes for auth/admin features | Supabase project URL |
+| SUPABASE_SERVICE_ROLE_KEY | — | Yes for auth/admin features | Supabase service role key for backend verification |
+| ADMIN_EMAIL | admin@onbrella.com | No | Default admin email used by admin middleware |
 
 ## Testing with Hoppscotch
 
@@ -82,11 +112,10 @@ Optional: set header `X-Session-Id: my-session` to keep rentals per session.
 All backend tests use Jest. No hardware mock required (hardware client is mocked).
 
 ```bash
-# Run all project tests
+# Run tests from the backend directory.
+cd backend
 npm test
-
-# Run backend tests only
-npm run test:backend
+npm run test:coverage
 ```
 
 ### Test Files

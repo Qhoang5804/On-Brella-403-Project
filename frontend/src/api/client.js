@@ -59,25 +59,22 @@ export async function getStations() {
 
 /**
  * @param {string} stationId
- * @param {number} slotNumber
  * @returns {Promise<{ success: boolean, rentalId: string, umbrellaId: string, startTime: string }>}
  */
-export async function startRental(stationId, slotNumber) {
-  return request("POST", "/api/rent", { stationId, slotNumber });
+export async function startRental(stationId) {
+  return request("POST", "/api/rent", { stationId });
 }
 
 /**
  * @param {string} rentalId
  * @param {string} stationId
- * @param {number} slotNumber
  * @param {string} umbrellaId
  * @returns {Promise<{ success: boolean, rentalId: string, endTime: string }>}
  */
-export async function endRental(rentalId, stationId, slotNumber, umbrellaId) {
+export async function endRental(rentalId, stationId, umbrellaId) {
   return request("POST", "/api/return", {
     rentalId,
     stationId,
-    slotNumber,
     umbrellaId,
   });
 }

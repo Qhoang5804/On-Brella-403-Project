@@ -89,13 +89,12 @@ async function getStations() {
 }
 
 /**
- * Start a rental. Validates: no active rental for session; slot available.
+ * Start a rental. Validates: no active rental for session; station has availability.
  * @param {string} sessionId
  * @param {string} stationId
- * @param {number} slotNumber
  * @returns {Promise<{success: boolean, rentalId: string, umbrellaId: string, startTime: string}>}
  */
-async function startRental(sessionId, stationId, slotNumber) {
+async function startRental(sessionId, stationId) {
   const store = getRentalStore();
   const existing = await store.getActiveBySession(sessionId);
   if (existing) {
@@ -105,7 +104,7 @@ async function startRental(sessionId, stationId, slotNumber) {
   const { unlock } = hardwareClient;
 
   try {
-    await unlock(stationId, slotNumber);
+    await unlock(stationId);
   } catch (err) {
     if (err.statusCode === 502 || err.message?.includes("fetch failed")) {
       throw new RentalError("Hardware unavailable", 503);
@@ -113,7 +112,7 @@ async function startRental(sessionId, stationId, slotNumber) {
     throw new RentalError(err.message || "Unlock failed", err.statusCode || 409);
   }
 
-  const { rentalId, umbrellaId, startTime } = await store.create(sessionId, stationId, slotNumber);
+  const { rentalId, umbrellaId, startTime } = await store.create(sessionId, stationId);
 
   await stationsDb.decrementNumBrellas(stationId);
 
@@ -130,13 +129,13 @@ async function startRental(sessionId, stationId, slotNumber) {
  * @param {string} sessionId
  * @param {string} rentalId
  * @param {string} stationId
- * @param {number} slotNumber
  * @param {string} umbrellaId
  * @returns {Promise<{success: boolean, rentalId: string, endTime: string, costCents: number, durationMs: number}>}
  */
-async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId) {
+async function endRental(sessionId, rentalId, stationId, umbrellaId) {
   const store = getRentalStore();
   const rental = await store.getById(rentalId);
+
   if (!rental) {
     throw new RentalError("Rental not found", 404);
   }
@@ -147,10 +146,22 @@ async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId)
     throw new RentalError("Rental does not belong to this session", 403);
   }
 
+  const returnStation = await stationsDb.getByStationId(stationId);
+  if (!returnStation) {
+    throw new RentalError("Return station not found", 404);
+  }
+
+  const capacity = returnStation.capacity ?? 10;
+  const numUmbrellas = returnStation.num_brellas ?? 0;
+
+  if (numUmbrellas >= capacity) {
+    throw new RentalError("Return station is full", 409);
+  }
+
   const { returnUmbrella } = hardwareClient;
 
   try {
-    await returnUmbrella(stationId, slotNumber, umbrellaId);
+    await returnUmbrella(stationId, umbrellaId);
   } catch (err) {
     if (err.statusCode === 502 || err.message?.includes("fetch failed")) {
       throw new RentalError("Hardware unavailable", 503);
@@ -158,14 +169,13 @@ async function endRental(sessionId, rentalId, stationId, slotNumber, umbrellaId)
     throw new RentalError(err.message || "Return failed", err.statusCode || 409);
   }
 
-  const updated = await store.complete(rentalId, stationId, slotNumber);
+  const updated = await store.complete(rentalId, stationId);
   if (!updated) {
     throw new RentalError("Failed to complete rental", 500);
   }
 
   await stationsDb.incrementNumBrellas(stationId);
 
-  // Calculate cost
   const startTime = new Date(rental.startTime).getTime();
   const endTime = new Date(updated.endTime).getTime();
   const durationMs = endTime - startTime;

@@ -49,11 +49,11 @@ async function registerStation(station) {
  * @param {number} slotNumber
  * @returns {Promise<{success: boolean, message: string, stationId: string, slotNumber: number}>}
  */
-async function unlock(stationId, slotNumber) {
+async function unlock(stationId) {
   const res = await fetch(`${BASE_URL}/hardware/unlock`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stationId, slotNumber }),
+    body: JSON.stringify({ stationId }),
   });
   const data = await res.json();
   if (!res.ok || !data.success) {
@@ -68,11 +68,11 @@ async function unlock(stationId, slotNumber) {
  * @param {string} umbrellaId
  * @returns {Promise<{success: boolean, message: string}>}
  */
-async function returnUmbrella(stationId, slotNumber, umbrellaId) {
+async function returnUmbrella(stationId, umbrellaId) {
   const res = await fetch(`${BASE_URL}/hardware/return`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stationId, slotNumber, umbrellaId }),
+    body: JSON.stringify({ stationId, umbrellaId }),
   });
   const data = await res.json();
   if (!res.ok || !data.success) {

@@ -1,6 +1,6 @@
 /**
  * POST /api/rent — Start a rental (unlock umbrella).
- * Body: { stationId, slotNumber [, sessionId ] }
+ * Body: { stationId [, sessionId ] }
  */
 
 const express = require("express");
@@ -13,22 +13,15 @@ router.post(
   "/",
   requireJsonContentType,
   requireBody,
-  requireFields("stationId", "slotNumber"),
+  requireFields("stationId"),
   async (req, res, next) => {
     try {
       const sid = sessionId(req);
-      const { stationId, slotNumber } = req.body;
+      const { stationId } = req.body;
 
       const stationIdStr = String(stationId).trim();
-      const slotNum = parseInt(slotNumber, 10);
-      if (isNaN(slotNum) || slotNum < 0) {
-        return res.status(400).json({
-          success: false,
-          error: "slotNumber must be a non-negative integer",
-        });
-      }
 
-      const result = await rentalService.startRental(sid, stationIdStr, slotNum);
+      const result = await rentalService.startRental(sid, stationIdStr);
       res.status(201).json(result);
     } catch (err) {
       next(err);

@@ -50,14 +50,13 @@ export function RentalProvider({ children }) {
   const [activeRental, setActiveRental] = useState(() => loadStoredRental());
   const [lastReturnSummary, setLastReturnSummary] = useState(() => loadLastReturnSummary());
 
-  const startRental = useCallback(async (stationId, slotNumber) => {
-    const result = await api.startRental(stationId, slotNumber);
+  const startRental = useCallback(async (stationId) => {
+    const result = await api.startRental(stationId);
     const rental = {
       rentalId: result.rentalId,
       umbrellaId: result.umbrellaId,
       startTime: result.startTime,
       stationId,
-      slotNumber,
     };
     setActiveRental(rental);
     saveRental(rental);
@@ -65,12 +64,11 @@ export function RentalProvider({ children }) {
   }, []);
 
   const endRental = useCallback(
-    async (stationId, slotNumber) => {
+    async (stationId) => {
       if (!activeRental) throw new Error("No active rental");
       const result = await api.endRental(
         activeRental.rentalId,
         stationId,
-        slotNumber,
         activeRental.umbrellaId
       );
       const summary = {

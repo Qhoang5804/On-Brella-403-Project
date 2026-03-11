@@ -5,7 +5,7 @@
 
 const db = require("../db");
 
-function _umbrellaId(stationId, slotNumber) {
+function _umbrellaId(stationId, slotNumber = 0) {
   return `umbrella-${stationId}-${slotNumber}`;
 }
 
@@ -35,7 +35,7 @@ function _rowToRental(row) {
  * @param {number} slotNumber
  * @returns {Promise<{ rentalId: string, umbrellaId: string, startTime: string }>}
  */
-async function create(sessionId, stationId, slotNumber) {
+async function create(sessionId, stationId, slotNumber = 0) {
   const rentalId = _rentalId();
   const umbrellaId = _umbrellaId(stationId, slotNumber);
   await db.query(
@@ -57,7 +57,7 @@ async function create(sessionId, stationId, slotNumber) {
  * @param {number} slotNumber
  * @returns {Promise<object|null>} Updated rental or null
  */
-async function complete(rentalId, returnStationId, slotNumber) {
+async function complete(rentalId, returnStationId, slotNumber = 0) {
   const { rows } = await db.query(
     `UPDATE rentals
      SET end_time = now(), return_station_id = $2, return_slot_number = $3, status = 'COMPLETED'

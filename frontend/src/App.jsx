@@ -29,6 +29,41 @@ import { AdminActivityPage } from "./pages/admin/AdminActivityPage";
 import { AdminInventoryPage } from "./pages/admin/AdminInventoryPage";
 import { AdminContentPage } from "./pages/admin/AdminContentPage";
 import UpdatePasswordPage from "./pages/UpdatePassword";
+import { useRental } from "./context/RentalContext";
+
+function RequireNoActiveRental({ children }) {
+  const { activeRental } = useRental();
+
+  if (activeRental) {
+    return <Navigate to="/active" replace />;
+  }
+
+  return children;
+}
+
+function RequireActiveRental({ children }) {
+  const { activeRental } = useRental();
+
+  if (!activeRental) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
+function RequireLastReturnSummary({ children }) {
+  const { activeRental, lastReturnSummary } = useRental();
+
+  if (activeRental) {
+    return <Navigate to="/active" replace />;
+  }
+
+  if (!lastReturnSummary) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
 
 function App() {
   useEffect(() => {
@@ -71,7 +106,9 @@ function App() {
               path="/" 
               element={
                 <ProtectedRoute>
-                  <MapPage />
+                  <RequireNoActiveRental>
+                    <MapPage />
+                  </RequireNoActiveRental>
                 </ProtectedRoute>
               } 
             />
@@ -79,9 +116,11 @@ function App() {
               path="/scan"
               element={
                 <ProtectedRoute>
-                  <ScanErrorBoundary>
-                    <ScanPage2 />
-                  </ScanErrorBoundary>
+                  <RequireNoActiveRental>
+                    <ScanErrorBoundary>
+                      <ScanPage2 />
+                    </ScanErrorBoundary>
+                  </RequireNoActiveRental>
                 </ProtectedRoute>
               }
             />
@@ -99,7 +138,9 @@ function App() {
               path="/active" 
               element={
                 <ProtectedRoute>
-                  <ActivePage />
+                  <RequireActiveRental>
+                    <ActivePage />
+                  </RequireActiveRental>
                 </ProtectedRoute>
               } 
             />
@@ -107,7 +148,9 @@ function App() {
               path="/thank-you" 
               element={
                 <ProtectedRoute>
-                  <ThankYouPage />
+                  <RequireLastReturnSummary>
+                    <ThankYouPage />
+                  </RequireLastReturnSummary>
                 </ProtectedRoute>
               } 
             />

@@ -37,10 +37,10 @@ src/
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | /health | Health check |
-| GET | /api/stations | List stations (proxies to hardware) |
+| GET | /api/stations | List stations (from DB inventory; location-scoped for admins) |
 | GET | /api/history | List completed rental history. Query: `?limit=&offset=`. Session: `X-Session-Id`. |
-| POST | /api/rent | Start rental. Body: `{ stationId, slotNumber }` |
-| POST | /api/return | End rental. Body: `{ rentalId, stationId, slotNumber, umbrellaId }` |
+| POST | /api/rent | Start rental. Body: `{ stationId }` |
+| POST | /api/return | End rental. Body: `{ rentalId, stationId, umbrellaId }` |
 
 **Session:** `X-Session-Id` header or `sessionId` in body. Defaults to `guest`.
 
@@ -76,7 +76,7 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supaba
    SUPABASE_URL=https://your-project-ref.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
-Ensure your Supabase project has the expected tables (`stations`, `umbrellas`, `user`, `rentals`). SQL reference and setup files are located in the top-level `docs/` folder.
+Ensure your Supabase project has the expected tables (`stations`, `rentals`, `profiles`, and admin tables like `locations`, `app_content`, `config`, `support_requests` if you use the admin dashboard). SQL reference and setup files are located in the top-level `docs/` folder.
 
 **Health check:** `GET /health` returns `{ status: "ok", database: "connected" }` when the DB is reachable.
 
@@ -102,8 +102,8 @@ Use base URL `http://localhost:5001`. Ensure Mockoon (hardware mock) is running 
 |--------|--------|-----|----------------|
 | Health | GET | `http://localhost:5001/health` | — |
 | List stations | GET | `http://localhost:5001/api/stations` | — |
-| Start rental | POST | `http://localhost:5001/api/rent` | `{"stationId":"station-001","slotNumber":5}` |
-| End rental | POST | `http://localhost:5001/api/return` | `{"rentalId":"<from rent>","stationId":"station-001","slotNumber":5,"umbrellaId":"<from rent>"}` |
+| Start rental | POST | `http://localhost:5001/api/rent` | `{"stationId":"station-001"}` |
+| End rental | POST | `http://localhost:5001/api/return` | `{"rentalId":"<from rent>","stationId":"station-001","umbrellaId":"<from rent>"}` |
 
 Optional: set header `X-Session-Id: my-session` to keep rentals per session.
 

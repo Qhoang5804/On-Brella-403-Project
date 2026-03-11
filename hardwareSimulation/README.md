@@ -51,8 +51,8 @@ The file is a **Mockoon environment**. Main parts:
 
 The mock exposes **two routes** only:
 
-1. **POST `/hardware/unlock`** – Simulate “unlock slot X at station Y” (start rental). Request: `{ stationId, slotNumber }`. Response: `{ success: true, message, ... }`.
-2. **POST `/hardware/return`** – Simulate “return umbrella to slot X at station Y”. Request: `{ stationId, slotNumber, umbrellaId }`. Response: `{ success: true, message, ... }`.
+1. **POST `/hardware/unlock`** – Simulate “unlock an umbrella at station Y” (start rental). Request: `{ stationId }`. Response: `{ success: true, message, ... }`.
+2. **POST `/hardware/return`** – Simulate “return an umbrella to station Y”. Request: `{ stationId, umbrellaId }`. Response: `{ success: true, message, ... }`.
 
 The mock does **not** persist anything. It always returns 200 and the same (or templated) JSON. All real state (rentals, station counts) lives in the **database**.
 
@@ -60,8 +60,8 @@ The mock does **not** persist anything. It always returns 200 and the same (or t
 
 - **Config** (`backend/src/config/index.js`): `hardwareUrl = process.env.HARDWARE_URL || "http://localhost:3000"`.
 - **hardwareClient.js** – Single place that talks to the mock:
-  - `unlock(stationId, slotNumber)` → POST `/hardware/unlock`
-  - `returnUmbrella(stationId, slotNumber, umbrellaId)` → POST `/hardware/return`
+  - `unlock(stationId)` → POST `/hardware/unlock`
+  - `returnUmbrella(stationId, umbrellaId)` → POST `/hardware/return`
 - **rentalService.js** – Calls the mock on rent/return:
   - **startRental:** `hardwareClient.unlock()` → then creates rental in DB and decrements `num_brellas`.
   - **endRental:** `hardwareClient.returnUmbrella()` → then completes rental in DB and increments `num_brellas`.
@@ -148,9 +148,8 @@ Unlock an umbrella at a station (start rental).
 | Field       | Type   | Required |
 |------------|--------|----------|
 | stationId  | string | yes      |
-| slotNumber | number | yes      |
 
-**Example:** `{ "stationId": "station-001", "slotNumber": 5 }`
+**Example:** `{ "stationId": "station-001" }`
 
 **Response (200):**
 
@@ -158,8 +157,7 @@ Unlock an umbrella at a station (start rental).
 {
   "success": true,
   "message": "Umbrella unlocked successfully",
-  "stationId": "station-001",
-  "slotNumber": 5
+  "stationId": "station-001"
 }
 ```
 
@@ -174,10 +172,9 @@ Return an umbrella to a station (end rental).
 | Field       | Type   | Required |
 |------------|--------|----------|
 | stationId  | string | yes      |
-| slotNumber | number | yes      |
 | umbrellaId | string | yes      |
 
-**Example:** `{ "stationId": "station-001", "slotNumber": 3, "umbrellaId": "umbrella-123" }`
+**Example:** `{ "stationId": "station-001", "umbrellaId": "umbrella-123" }`
 
 **Response (200):**
 
@@ -186,7 +183,6 @@ Return an umbrella to a station (end rental).
   "success": true,
   "message": "Umbrella returned successfully",
   "stationId": "station-001",
-  "slotNumber": 3,
   "umbrellaId": "umbrella-123"
 }
 ```

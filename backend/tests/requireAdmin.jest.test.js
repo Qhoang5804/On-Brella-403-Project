@@ -91,20 +91,6 @@ describe("requireAdmin middleware", () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    test.skip("should return 503 when supabase client is not configured", async () => {
-      delete process.env.SUPABASE_URL;
-      const { requireAdmin } = require("../src/middleware/requireAdmin");
-      req.headers.authorization = "Bearer token123";
-
-      await requireAdmin(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(503);
-      expect(res.json).toHaveBeenCalledWith({
-        error: "Admin auth not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in backend/.env (use your Supabase project URL and Project Settings → API → service_role key). See docs/admin-setup.md.",
-      });
-      expect(next).not.toHaveBeenCalled();
-    });
-
     test("should return 401 when token is invalid", async () => {
       const { requireAdmin } = require("../src/middleware/requireAdmin");
       req.headers.authorization = "Bearer invalid-token";
@@ -157,112 +143,6 @@ describe("requireAdmin middleware", () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    test.skip("should allow access for user with admin role in database", async () => {
-      const { requireAdmin } = require("../src/middleware/requireAdmin");
-      req.headers.authorization = "Bearer user-token";
-      const mockUser = {
-        id: "user-123",
-        email: "user@example.com"
-      };
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: mockUser },
-        error: null
-      });
-      mockDb.query.mockResolvedValue({
-        rows: [{ role: "admin" }]
-      });
-
-      await requireAdmin(req, res, next);
-
-      expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledWith("user-token");
-      expect(mockDb.query).toHaveBeenCalledWith(
-        "SELECT role FROM profiles WHERE id = $1 LIMIT 1",
-        ["user-123"]
-      );
-      expect(req.adminUserId).toBe("user-123");
-      expect(next).toHaveBeenCalled();
-      expect(res.status).not.toHaveBeenCalled();
-    });
-
-    test.skip("should deny access for user without admin role", async () => {
-      const { requireAdmin } = require("../src/middleware/requireAdmin");
-      req.headers.authorization = "Bearer user-token";
-      const mockUser = {
-        id: "user-123",
-        email: "user@example.com"
-      };
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: mockUser },
-        error: null
-      });
-      mockDb.query.mockResolvedValue({
-        rows: [{ role: "user" }]
-      });
-
-      await requireAdmin(req, res, next);
-
-      expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledWith("user-token");
-      expect(mockDb.query).toHaveBeenCalledWith(
-        "SELECT role FROM profiles WHERE id = $1 LIMIT 1",
-        ["user-123"]
-      );
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ error: "Admin access required" });
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    test.skip("should deny access when database query fails", async () => {
-      const { requireAdmin } = require("../src/middleware/requireAdmin");
-      req.headers.authorization = "Bearer user-token";
-      const mockUser = {
-        id: "user-123",
-        email: "user@example.com"
-      };
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: mockUser },
-        error: null
-      });
-      mockDb.query.mockRejectedValue(new Error("Database error"));
-
-      await requireAdmin(req, res, next);
-
-      expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledWith("user-token");
-      expect(mockDb.query).toHaveBeenCalledWith(
-        "SELECT role FROM profiles WHERE id = $1 LIMIT 1",
-        ["user-123"]
-      );
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ error: "Admin access required" });
-      expect(next).not.toHaveBeenCalled();
-    });
-
-    test.skip("should deny access when no profile found in database", async () => {
-      const { requireAdmin } = require("../src/middleware/requireAdmin");
-      req.headers.authorization = "Bearer user-token";
-      const mockUser = {
-        id: "user-123",
-        email: "user@example.com"
-      };
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: mockUser },
-        error: null
-      });
-      mockDb.query.mockResolvedValue({
-        rows: []
-      });
-
-      await requireAdmin(req, res, next);
-
-      expect(mockSupabaseClient.auth.getUser).toHaveBeenCalledWith("user-token");
-      expect(mockDb.query).toHaveBeenCalledWith(
-        "SELECT role FROM profiles WHERE id = $1 LIMIT 1",
-        ["user-123"]
-      );
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ error: "Admin access required" });
-      expect(next).not.toHaveBeenCalled();
-    });
-
     test("should return 500 when getUser throws an error", async () => {
       const { requireAdmin } = require("../src/middleware/requireAdmin");
       req.headers.authorization = "Bearer token123";
@@ -277,13 +157,6 @@ describe("requireAdmin middleware", () => {
   });
 
   describe("getSupabase", () => {
-    test.skip("should return supabase client when env vars are set", () => {
-      const client = getSupabase();
-      // The client should be created with the mocked createClient
-      expect(createClient).toHaveBeenCalled();
-      expect(client).toBe(mockSupabaseClient);
-    });
-
     test("should return null when SUPABASE_URL is not set", () => {
       delete process.env.SUPABASE_URL;
       const client = getSupabase();

@@ -21,43 +21,121 @@ async function getByStationId(stationId) {
 }
 
 /**
- * List all stations from DB (for admin). Returns [] if no DB or no rows.
+ * List stations from DB. Used by public GET /api/stations (with optional location filter) and admin inventory.
+ * @param {object} [opts] - Optional. { locationId: uuid } single location; { locationIds: uuid[] } multiple; omit = all.
  */
-async function listStations() {
+async function listStations(opts = {}) {
   const p = db.getPool();
   if (!p) return [];
-  const { rows } = await db.query(
-    "SELECT station_id, station_name, latitude, longitude, capacity, num_brellas, status FROM stations ORDER BY station_id"
-  );
+  const locationId = opts.locationId;
+  const locationIds = opts.locationIds && Array.isArray(opts.locationIds) ? opts.locationIds.filter(Boolean) : [];
+  let rows;
+  if (locationIds.length > 0) {
+    try {
+      const result = await db.query(
+        "SELECT station_id, station_name, latitude, longitude, capacity, num_brellas, status, location_id FROM stations WHERE location_id = ANY($1) ORDER BY station_id",
+        [locationIds]
+      );
+      rows = result.rows;
+    } catch {
+      rows = [];
+    }
+  } else if (locationId) {
+    try {
+      const result = await db.query(
+        "SELECT station_id, station_name, latitude, longitude, capacity, num_brellas, status, location_id FROM stations WHERE location_id = $1 ORDER BY station_id",
+        [locationId]
+      );
+      rows = result.rows;
+    } catch {
+      rows = [];
+    }
+  } else {
+    const result = await db.query(
+      "SELECT station_id, station_name, latitude, longitude, capacity, num_brellas, status FROM stations ORDER BY station_id"
+    );
+    rows = result.rows;
+  }
   return rows.map((r) => ({ ...r, name: r.station_name }));
 }
 
 /**
  * Upsert station. New rows get num_brellas = capacity. On conflict, cap num_brellas to new capacity.
- * @param {object} opts - { stationId, name?, latitude?, longitude?, capacity, status? }
+ * @param {object} opts - { stationId, name?, latitude?, longitude?, capacity, status?, locationId? }
  * @returns {Promise<object|null>} Upserted row or null if no DB
  */
-async function upsertStation({ stationId, name, latitude, longitude, capacity, status = "operational" }) {
+async function upsertStation({ stationId, name, latitude, longitude, capacity, status = "operational", locationId = null }) {
   const pool = db.getPool();
   if (!pool) return null;
 
-  const { rows } = await db.query(
-    `INSERT INTO stations (station_id, station_name, latitude, longitude, capacity, num_brellas, status)
-     VALUES ($1, $2, $3, $4, $5, $5, $6)
-     ON CONFLICT (station_id) DO UPDATE SET
-       station_name = COALESCE(NULLIF(EXCLUDED.station_name, ''), stations.station_name),
+  const hasLocation = await hasStationsLocationColumn();
+  const cols = hasLocation
+    ? "station_id, station_name, latitude, longitude, capacity, num_brellas, status, location_id"
+    : "station_id, station_name, latitude, longitude, capacity, num_brellas, status";
+  const vals = hasLocation
+    ? "$1, $2, $3, $4, $5, $5, $6, $7"
+    : "$1, $2, $3, $4, $5, $5, $6";
+  const conflictSet = hasLocation
+    ? `station_name = COALESCE(NULLIF(EXCLUDED.station_name, ''), stations.station_name),
        latitude = COALESCE(EXCLUDED.latitude, stations.latitude),
        longitude = COALESCE(EXCLUDED.longitude, stations.longitude),
        capacity = EXCLUDED.capacity,
        num_brellas = LEAST(stations.num_brellas, EXCLUDED.capacity),
-       status = EXCLUDED.status
+       status = EXCLUDED.status,
+       location_id = COALESCE(EXCLUDED.location_id, stations.location_id)`
+    : `station_name = COALESCE(NULLIF(EXCLUDED.station_name, ''), stations.station_name),
+       latitude = COALESCE(EXCLUDED.latitude, stations.latitude),
+       longitude = COALESCE(EXCLUDED.longitude, stations.longitude),
+       capacity = EXCLUDED.capacity,
+       num_brellas = LEAST(stations.num_brellas, EXCLUDED.capacity),
+       status = EXCLUDED.status`;
+  const params = hasLocation
+    ? [stationId, name && String(name).trim() || null, latitude ?? null, longitude ?? null, capacity, status, locationId]
+    : [stationId, name && String(name).trim() || null, latitude ?? null, longitude ?? null, capacity, status];
+
+  const { rows } = await db.query(
+    `INSERT INTO stations (${cols}) VALUES (${vals})
+     ON CONFLICT (station_id) DO UPDATE SET ${conflictSet}
      RETURNING station_id, station_name, latitude, longitude, capacity, num_brellas, status`,
-    [stationId, name && String(name).trim() || null, latitude ?? null, longitude ?? null, capacity, status]
+    params
   );
 
   const row = rows[0];
   if (row) row.name = row.station_name;
   return row || null;
+}
+
+let _hasLocationColumn = null;
+async function hasStationsLocationColumn() {
+  if (_hasLocationColumn !== null) return _hasLocationColumn;
+  try {
+    const { rows } = await db.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'stations' AND column_name = 'location_id'"
+    );
+    _hasLocationColumn = (rows && rows.length) > 0;
+  } catch {
+    _hasLocationColumn = false;
+  }
+  return _hasLocationColumn;
+}
+
+/**
+ * Get a station's location_id (for admin scope check). Returns null if not found or column missing.
+ */
+async function getStationLocationId(stationId) {
+  const p = db.getPool();
+  if (!p) return null;
+  const ok = await hasStationsLocationColumn();
+  if (!ok) return null;
+  try {
+    const { rows } = await db.query(
+      "SELECT location_id FROM stations WHERE station_id = $1",
+      [stationId]
+    );
+    return rows[0]?.location_id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -167,4 +245,5 @@ module.exports = {
   updateStatus,
   updateStation,
   deleteStation,
+  getStationLocationId,
 };

@@ -28,13 +28,17 @@ function getSessionId() {
 /**
  * Send a request to the backend. Adds X-Session-Id and JSON content type.
  * Throws an Error with .status and .payload on non-OK response.
+ * @param {object} [opts] - Optional. { accessToken: string } to add Authorization: Bearer (e.g. for admin map filter).
  */
-async function request(method, path, body = null) {
+async function request(method, path, body = null, opts = {}) {
   const url = `${base}${path}`;
   const headers = {
     "Content-Type": "application/json",
     "X-Session-Id": getSessionId(),
   };
+  if (opts.accessToken) {
+    headers.Authorization = `Bearer ${opts.accessToken}`;
+  }
   const options = { method, headers };
   if (body && (method === "POST" || method === "PUT")) {
     options.body = JSON.stringify(body);
@@ -51,10 +55,11 @@ async function request(method, path, body = null) {
 }
 
 /**
+ * @param {object} [options] - Optional. { accessToken: string } to send with request (backend filters by admin location when valid admin token).
  * @returns {Promise<{ stations: Array, totalStations: number }>}
  */
-export async function getStations() {
-  return request("GET", "/api/stations");
+export async function getStations(options = {}) {
+  return request("GET", "/api/stations", null, options);
 }
 
 /**

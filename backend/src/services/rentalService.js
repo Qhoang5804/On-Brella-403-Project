@@ -39,14 +39,25 @@ function formatDbStationForApi(row) {
 }
 
 /**
+ * List stations for map/inventory. When opts.locationId or opts.locationIds are set (location-scoped admin),
+ * returns only those stations and skips hardware fallback.
+ * @param {object} [opts] - Optional. { locationId: string } or { locationIds: string[] } to scope by location.
  * @returns {Promise<{stations: Array, totalStations: number}>}
- * Stations from DB (inventory) so map and dashboard match. Falls back to hardware when DB empty.
  */
-async function getStations() {
+async function getStations(opts = {}) {
   const hasDb = !!require("../db").getPool();
+  const locationId = opts.locationId ?? null;
+  const locationIds = opts.locationIds && Array.isArray(opts.locationIds) ? opts.locationIds.filter(Boolean) : [];
+  const isLocationScoped = locationIds.length > 0 || locationId != null;
 
   if (hasDb) {
-    const rows = await stationsDb.listStations();
+    const listOpts = locationIds.length > 0 ? { locationIds } : { locationId };
+    const rows = await stationsDb.listStations(listOpts);
+    if (isLocationScoped) {
+      // Location-scoped admin: return only DB stations for assigned location(s) (no hardware fallback)
+      const stations = rows.map((r) => formatDbStationForApi(r));
+      return { stations, totalStations: stations.length };
+    }
     if (rows.length > 0) {
       const stations = rows.map((r) => formatDbStationForApi(r));
       return { stations, totalStations: stations.length };

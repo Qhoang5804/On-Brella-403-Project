@@ -297,9 +297,50 @@ docker compose down
 - The frontend should continue using `VITE_API_URL=http://localhost:5001` in `frontend/.env` because the browser connects through the host machine.
 - If you change dependencies, rebuild with:
 
-~~~bash
+```bash
 docker compose up --build
-~~~
+```
+
+## Render Deployment
+
+This repo includes a `render.yaml` file for an initial Render deployment setup.
+
+### Services
+
+The Render blueprint defines:
+
+- a **backend web service** using `backend/Dockerfile`
+- a **frontend static site** built from `frontend/`
+- **Supabase** remains the database and auth provider
+
+### Required Render Environment Variables
+
+Set these values in Render when creating the services:
+
+#### Backend
+- `DATABASE_URL`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `STRIPE_SECRET_KEY`
+
+Optional backend values:
+- `PORT` defaults to `5001`
+- `ADMIN_EMAIL` defaults to `admin@onbrella.com`
+
+#### Frontend
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_API_URL`
+
+Optional frontend value:
+- `VITE_ADMIN_EMAIL` defaults to `admin@onbrella.com`
+
+### Notes
+
+- The frontend is deployed as a static site.
+- The backend is deployed as a Docker-based web service.
+- The database is not created by Render in this setup; the app continues to use Supabase.
+- Before using the deployed frontend, set `VITE_API_URL` to the public URL of the deployed backend service.
 
 ## Build Instructions
 

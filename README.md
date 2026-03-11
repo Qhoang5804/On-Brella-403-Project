@@ -249,6 +249,58 @@ VITE_ADMIN_EMAIL=admin@onbrella.com
 
 If `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY` are missing or incorrect, the frontend may fail silently and show a white screen even though the Network tab looks clean.
 
+## Docker Setup
+
+You can run the full local development stack with Docker Compose.
+
+### Prerequisites
+
+Before starting, make sure these files exist:
+
+- `backend/.env`
+- `frontend/.env`
+
+Create them from the example files if needed:
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Then fill in the required environment variables before starting the containers.
+
+### Start All Services
+
+From the project root, run:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+- **hardwareSimulation** at `http://localhost:3000`
+- **backend** at `http://localhost:5001`
+- **frontend** at `http://localhost:5173`
+
+### Stop All Services
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
+### Notes
+
+- The backend container uses `HARDWARE_URL=http://hardware:3000` inside Docker Compose so it can reach the hardware mock service.
+- The frontend should continue using `VITE_API_URL=http://localhost:5001` in `frontend/.env` because the browser connects through the host machine.
+- If you change dependencies, rebuild with:
+
+~~~bash
+docker compose up --build
+~~~
+
 ## Build Instructions
 
 You can use **`make install`** and **`make build`** from the project root instead of the commands below.

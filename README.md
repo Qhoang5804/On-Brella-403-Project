@@ -13,6 +13,7 @@ Link to living document: https://docs.google.com/document/d/1LU65YB4aleQ35Zhabvx
 * A map will display to users where nearby umbrella stations are.
 * Users are able to view their rental history, including fee and rental duration (see [Profile & history](docs/profile-and-history.md)).
 * Stations are tracking the number of umbrellas remaining and the status umbrellas via code or sensor.
+* **Admins** can manage stations, locations, and app content via the admin dashboard at `/admin`; see [Admin setup](docs/admin-setup.md) for multiple admins and location-scoped access.
 
 ## Toolset
 
@@ -65,7 +66,9 @@ Link to living document: https://docs.google.com/document/d/1LU65YB4aleQ35Zhabvx
 │   └── jest.config.js
 │
 ├── docs/                       # Project documentation
-│   └── architecture.md         # Architecture documentation
+│   ├── architecture.md        # Architecture documentation
+│   ├── admin-setup.md         # Admin role, locations, and multi-admin setup
+│   └── supabase-admin-locations.sql  # Locations migration for location-scoped admins
 │
 ├── Status Report/              # Status reports (duplicate folder)
 ├── Status_Report/              # Status reports
@@ -174,6 +177,8 @@ The backend requires a PostgreSQL database connection. We use Supabase for this:
   | `email`         | `text` | User email                  |
   | `account_status`| `text` | e.g. `active`, `disabled`   |
 
+For **admin and location-scoped admins**, you also need **`profiles`** (with `role`, and optionally `location_id`, `is_super_admin`) and optionally a **`locations`** table. Run [supabase-admin-locations.sql](docs/supabase-admin-locations.sql) as described in [Admin setup](docs/admin-setup.md).
+
 You can create these tables using the Supabase Table editor UI, or by running equivalent `CREATE TABLE` statements in the SQL editor. Rentals do **not** need seed data; they are created automatically when you use the app. For a working demo, create at least a few `stations` rows (matching the example IDs used by the hardware mock such as `station-001`, `station-002`, etc.).
 
 #### Example Supabase table views
@@ -248,6 +253,16 @@ VITE_ADMIN_EMAIL=admin@onbrella.com
 - **`VITE_ADMIN_EMAIL`**: Optional override matching the admin email used for login; see `docs/admin-setup.md` for details.
 
 If `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY` are missing or incorrect, the frontend may fail silently and show a white screen even though the Network tab looks clean.
+
+### 4. Admin setup (optional)
+
+The app supports **multiple admin accounts**, each with their own Supabase Auth email and password. Admins can be scoped to a **location** so they only see and manage stations in that location.
+
+- **Quick start (one admin):** Create a user in Supabase Auth, set `profiles.role = 'admin'` in the database, then log in at `/login`. You’ll see **Admin** in Profile and can open `/admin`. The backend must have `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `backend/.env`; otherwise admin API calls return **503**.
+- **Optional super-admin email:** You can use a single email that is always treated as admin (no DB role required). Default: `admin@onbrella.com`; override with `VITE_ADMIN_EMAIL` (frontend) and `ADMIN_EMAIL` (backend). That user is a **super admin** (sees all stations and locations).
+- **Multiple admins and locations:** Run the [locations migration](docs/supabase-admin-locations.sql) in Supabase to add a `locations` table and link admins/stations to locations. Then assign each admin to a location so they only manage that location’s stations.
+
+Full details, SQL examples, and troubleshooting: **[Admin setup](docs/admin-setup.md)**.
 
 ## Docker Setup
 
@@ -620,6 +635,8 @@ Before creating a release:
 
 **Session Management:** Use `X-Session-Id` header or include `sessionId` in the request body. Defaults to `guest` if not provided. Rent, return, and history all use the same session so completed rentals appear on the History page when using the same browser tab.
 
+**Admin API** (all under `/api/admin/*`, require authenticated admin): `GET /api/admin/me`, `GET /api/admin/stats`, `GET /api/admin/stations`, `POST|PATCH|PUT|DELETE /api/admin/stations/*`, `GET /api/admin/users`, `GET /api/admin/activity`, `GET /api/admin/trends`, `GET /api/admin/reports`, `GET|PUT /api/admin/content/*`, `GET|PUT /api/admin/pricing`. Location-scoped admins see only their location’s stations and stats. See [Admin setup](docs/admin-setup.md).
+
 ### Hardware Mock API (Port 3000)
 
 | Method | Path | Description |
@@ -636,7 +653,11 @@ Before creating a release:
 |----------|---------|-------------|
 | `PORT` | `5001` | Backend server port |
 | `HARDWARE_URL` | `http://localhost:3000` | Hardware mock server URL |
-| `DATABASE_URL` | — | **Required** - Supabase/Postgres connection URI |
+| `DATABASE_URL` | — | **Required** – Supabase/Postgres connection URI |
+| `SUPABASE_URL` | — | **Required for admin API** – Supabase project URL (same project as frontend) |
+| `SUPABASE_SERVICE_ROLE_KEY` | — | **Required for admin API** – Supabase service role key (Project Settings → API). Do not expose in frontend. |
+| `ADMIN_EMAIL` | `admin@onbrella.com` | Optional super-admin email override; see [Admin setup](docs/admin-setup.md). |
+| `STRIPE_SECRET_KEY` | — | Required for Stripe payment features; keep server-side only. |
 
 ### Frontend
 

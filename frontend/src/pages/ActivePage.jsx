@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRental } from "../context/RentalContext";
 import { formatDurationFromStart } from "../utils/duration";
-import { getStationDisplayName, getStationAddress } from "../utils/stationNames";
 import { StationMap } from "../components/StationMap";
 import * as api from "../api/client";
 
@@ -10,14 +9,12 @@ export function ActivePage() {
   const navigate = useNavigate();
   const { activeRental, endRental, lastReturnSummary } = useRental();
   const mapRef = useRef(null);
-  const searchInputRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState("00:00:00");
   const [stations, setStations] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchExpanded, setSearchExpanded] = useState(false);
   const [routeTo, setRouteTo] = useState(null);
+  const [isTimerCollapsed, setIsTimerCollapsed] = useState(false);
 
   const hasValidRental = activeRental && typeof activeRental === "object" && activeRental.startTime;
 
@@ -61,18 +58,7 @@ export function ActivePage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (searchExpanded) searchInputRef.current?.focus();
-  }, [searchExpanded]);
-
-  const filteredStations = searchQuery.trim()
-    ? stations.filter(
-        (s) =>
-          getStationDisplayName(s.stationId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (s.stationId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (getStationAddress(s.stationId) || "").toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : stations;
+  const filteredStations = stations;
 
   const goToMyLocation = () => {
     setError(null);
@@ -115,38 +101,12 @@ export function ActivePage() {
         />
       </div>
 
-      {/* Search and navigation (same as map page) */}
-      <div className="absolute top-4 right-4 z-20">
-        <div
-          className={`bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center border border-slate-100 dark:border-slate-700 transition-all duration-300 origin-right overflow-hidden ${
-            searchExpanded ? "w-80 px-3 py-2" : "w-12 h-12 p-2"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => setSearchExpanded((s) => !s)}
-            className="flex items-center justify-center w-8 h-8 rounded-md"
-            aria-label="Open search"
-          >
-            <span className="material-icons text-primary">search</span>
-          </button>
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search by station name or address"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onBlur={() => {
-              if (!searchQuery) setSearchExpanded(false);
-            }}
-            className={`bg-transparent border-none focus:outline-none focus:ring-0 ml-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 ${
-              searchExpanded ? "block w-full" : "hidden"
-            }`}
-          />
-        </div>
-      </div>
       {/* Navigation arrow: same logic as Map page – bottom-right, above bottom sheet */}
-      <div className="fixed right-4 bottom-[52vh] z-30 transition-[bottom] duration-300 ease-out">
+      <div
+        className={`fixed right-4 z-30 transition-[bottom] duration-300 ease-out ${
+          isTimerCollapsed ? "bottom-24" : "bottom-[52vh]"
+        }`}
+      >
         {routeTo && (
           <button
             type="button"
@@ -167,12 +127,34 @@ export function ActivePage() {
         </button>
       </div>
 
-      {/* Bottom sheet - from provided design */}
-      <div className="fixed inset-x-0 bottom-0 z-50">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[32px] shadow-2xl px-6 pt-2 pb-12 border-t border-slate-200 dark:border-slate-800 relative">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2" />
-          </div>
+      {/* Collapsible timer sheet */}
+      {isTimerCollapsed ? (
+        <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center pb-3">
+          <button
+            type="button"
+            onClick={() => setIsTimerCollapsed(false)}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2 shadow-xl flex items-center gap-1.5 active:scale-95 transition-transform"
+            aria-label="Expand timer panel"
+          >
+            <span className="material-symbols-outlined text-primary text-[20px]">keyboard_arrow_up</span>
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">Show timer</span>
+          </button>
+        </div>
+      ) : (
+        <div className="fixed inset-x-0 bottom-0 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-t-[32px] shadow-2xl px-6 pt-2 pb-12 border-t border-slate-200 dark:border-slate-800 relative">
+            <div className="flex justify-center mb-4">
+              <button
+                type="button"
+                onClick={() => setIsTimerCollapsed(true)}
+                className="w-12 h-6 rounded-full flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Collapse timer panel"
+              >
+                <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-[22px]">
+                  keyboard_arrow_down
+                </span>
+              </button>
+            </div>
           <div className="flex justify-center mb-4">
             <div className="bg-blue-50 dark:bg-blue-900/30 text-primary text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
@@ -229,7 +211,8 @@ export function ActivePage() {
             <p className="text-sm text-center text-red-500 mt-3">{error}</p>
           )}
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Top gradient bar */}
       <div className="fixed top-0 left-0 right-0 h-12 bg-gradient-to-b from-black/20 to-transparent pointer-events-none z-[60]" />

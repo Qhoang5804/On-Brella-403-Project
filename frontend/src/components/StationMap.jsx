@@ -251,6 +251,9 @@ export function StationMap({
         scrollWheelZoom
         zoomControl={false}
         attributionControl={false}
+        minZoom={3}
+        maxBounds={[[-90, -180], [90, 180]]}
+        maxBoundsViscosity={1.0}
       >
         <TileLayer attribution={tileConfig.attribution} url={tileConfig.url} />
         {/* Show live user marker in active/simplified mode too; RouteLine draws its own user dot while routing. */}

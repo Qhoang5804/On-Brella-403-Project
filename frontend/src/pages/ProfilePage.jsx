@@ -15,7 +15,6 @@ export function ProfilePage() {
   const navigate = useNavigate();
 
   const handlePersonalInfo = () => navigate("/profile/personal-info");
-  const handlePaymentMethods = () => navigate("/profile/payment-methods");
   const handleNotifications = () => navigate("/profile/notifications");
   const handleHelpSupport = () => navigate("/profile/help");
 
@@ -23,7 +22,6 @@ export function ProfilePage() {
 
   const menuItems = [
     { label: "Personal Information", icon: "person", iconBg: "bg-blue-50 dark:bg-blue-900/20 text-blue-500", onClick: handlePersonalInfo },
-    { label: "Payment Methods", icon: "payments", iconBg: "bg-green-50 dark:bg-green-900/20 text-green-500", onClick: handlePaymentMethods },
     { label: "Notifications", icon: "notifications", iconBg: "bg-amber-50 dark:bg-amber-900/20 text-amber-500", onClick: handleNotifications },
     { label: "Help & Support", icon: "help", iconBg: "bg-purple-50 dark:bg-purple-900/20 text-purple-500", onClick: handleHelpSupport },
   ];
@@ -132,7 +130,7 @@ export function ProfilePage() {
             {isLoggingOut ? "Logging out…" : "Log Out"}
           </button>
 
-          <p className="text-center text-xs text-slate-400 dark:text-slate-600 pt-2 sm:pt-4 font-medium">Version 2.4.0 (Build 882)</p>
+          <p className="text-center text-xs text-slate-400 dark:text-slate-600 pt-2 sm:pt-4 font-medium">On-Brella - We've got you covered!</p>
         </div>
       </main>
     </div>

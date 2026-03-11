@@ -2,6 +2,7 @@
  * Rental and session state. Open/closed: add new state/actions without breaking existing consumers.
  */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { getStationDetails, getStationDisplayName } from "../utils/stationNames";
 import * as api from "../api/client";
 import { config } from "../config";
 
@@ -9,7 +10,7 @@ const RentalContext = createContext(null);
 
 function loadStoredRental() {
   try {
-    const raw = sessionStorage.getItem(config.rentalStorageKey);
+    const raw = localStorage.getItem(config.rentalStorageKey);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -20,16 +21,16 @@ function loadStoredRental() {
 function saveRental(rental) {
   try {
     if (rental) {
-      sessionStorage.setItem(config.rentalStorageKey, JSON.stringify(rental));
+      localStorage.setItem(config.rentalStorageKey, JSON.stringify(rental));
     } else {
-      sessionStorage.removeItem(config.rentalStorageKey);
+      localStorage.removeItem(config.rentalStorageKey);
     }
   } catch (_) {}
 }
 
 function loadLastReturnSummary() {
   try {
-    const raw = sessionStorage.getItem(config.lastReturnStorageKey);
+    const raw = localStorage.getItem(config.lastReturnStorageKey);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -39,9 +40,9 @@ function loadLastReturnSummary() {
 function saveLastReturn(summary) {
   try {
     if (summary) {
-      sessionStorage.setItem(config.lastReturnStorageKey, JSON.stringify(summary));
+      localStorage.setItem(config.lastReturnStorageKey, JSON.stringify(summary));
     } else {
-      sessionStorage.removeItem(config.lastReturnStorageKey);
+      localStorage.removeItem(config.lastReturnStorageKey);
     }
   } catch (_) {}
 }
@@ -66,11 +67,18 @@ export function RentalProvider({ children }) {
   const endRental = useCallback(
     async (stationId) => {
       if (!activeRental) throw new Error("No active rental");
+
       const result = await api.endRental(
         activeRental.rentalId,
         stationId,
         activeRental.umbrellaId
       );
+
+      const [pickUpStation, returnStation] = await Promise.all([
+        getStationDetails(activeRental.stationId).catch(() => null),
+        getStationDetails(stationId).catch(() => null),
+      ]);
+
       const summary = {
         rentalId: activeRental.rentalId,
         endTime: result.endTime,
@@ -78,20 +86,21 @@ export function RentalProvider({ children }) {
         costCents: result.costCents,
         pickUpStationId: activeRental.stationId,
         returnStationId: stationId,
+        pickUpStationName:
+          pickUpStation?.name || getStationDisplayName(activeRental.stationId),
+        returnStationName:
+          returnStation?.name || getStationDisplayName(stationId),
       };
+
       setActiveRental(null);
       setLastReturnSummary(summary);
       saveRental(null);
       saveLastReturn(summary);
+
       return { ...result, summary };
     },
     [activeRental]
   );
-
-  useEffect(() => {
-    const stored = loadStoredRental();
-    setActiveRental(stored);
-  }, []);
 
   const clearRentalState = useCallback(() => {
     setActiveRental(null);

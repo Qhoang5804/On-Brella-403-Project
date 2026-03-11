@@ -2,7 +2,48 @@
 
 Your on-the-go umbrella service!
 
-Link to living document: https://docs.google.com/document/d/1LU65YB4aleQ35Zhabvx-X3Wg0-YQ28uRWCdxK4oSLe8/edit?usp=sharing
+Link to living document: `https://docs.google.com/document/d/1LU65YB4aleQ35Zhabvx-X3Wg0-YQ28uRWCdxK4oSLe8/edit?usp=sharing`
+
+## Start here (docs)
+
+- **Purpose (what this system is)**: A self-service umbrella rental web app that lets users find stations, start a rental by scanning, and return umbrellas to any station. Admins can manage stations, locations, and app content.
+- **User documentation**
+  - **User manual**: [`USER_MANUAL.md`](USER_MANUAL.md)
+  - **How to log in / accounts**: [`docs/how-to-login.md`](docs/how-to-login.md)
+  - **Profile + rental history**: [`docs/profile-and-history.md`](docs/profile-and-history.md)
+- **Developer documentation**
+  - **Architecture overview**: [`docs/architecture.md`](docs/architecture.md)
+  - **Stations map data flow**: [`docs/stations-map-flow.md`](docs/stations-map-flow.md)
+  - **Admin setup (multi-admin + location scope)**: [`docs/admin-setup.md`](docs/admin-setup.md)
+  - **Database SQL setup scripts**: see the `docs/supabase-*.sql` files listed in the Project Structure below.
+
+## Completed functionality (final release)
+
+- **Core rental flow**
+  - **Find stations** on a map (stations and availability come from the database inventory)
+  - **Start rental** (unlock) by scanning/confirming a station
+  - **Return rental** to any station with capacity
+  - **Rental history** with duration and cost calculation
+- **User account & profile**
+  - Supabase Auth login
+  - User profile stored in `profiles` (name/bio/avatar fields as configured)
+- **Admin dashboard (`/admin`)**
+  - Admin authentication (Supabase JWT + `profiles.role = 'admin'`)
+  - **Station management** (create/update/delete stations; station names; status; capacity; lat/long)
+  - **Location-scoped admins** (locations + admin/location scoping)
+  - **Admin content management** (`app_content`) for Terms/Privacy/FAQ/Announcements/Support text
+  - **Pricing/config management** (`config`) for admin-managed values (e.g. unlock fee / per-minute rate)
+  - **Support/complaints queue** (`support_requests`) with open/resolved states
+- **Hardware simulation integration**
+  - Mock hardware service supports **unlock** and **return** (state persists in Supabase DB via backend)
+
+### Final release tag
+
+The final release (including documentation) is tagged **`final_release`** in this repository.
+
+### GenAI attribution
+
+Parts of this project (including code review and documentation updates) were assisted by generative AI using **Cursor** with an OpenAI GPT-based model. All AI-assisted changes were reviewed by the team before committing.
 
 ## Description
 
@@ -66,9 +107,16 @@ Link to living document: https://docs.google.com/document/d/1LU65YB4aleQ35Zhabvx
 │   └── jest.config.js
 │
 ├── docs/                       # Project documentation
+│   ├── images/                 # Supabase table screenshots for README
 │   ├── architecture.md        # Architecture documentation
 │   ├── admin-setup.md         # Admin role, locations, and multi-admin setup
-│   └── supabase-admin-locations.sql  # Locations migration for location-scoped admins
+│   ├── supabase-admin-locations.sql  # Locations migration for location-scoped admins
+│   ├── supabase-create-profiles-table.sql
+│   ├── supabase-add-profiles-role.sql
+│   ├── supabase-create-app-content-table.sql
+│   ├── supabase-create-config-table.sql
+│   ├── supabase-create-support-requests-table.sql
+│   └── supabase-stations-add-name.sql
 │
 ├── Status Report/              # Status reports (duplicate folder)
 ├── Status_Report/              # Status reports
@@ -89,16 +137,24 @@ From the project root you can use `make` for common tasks. Run **`make help`** t
 | `make build` | Build frontend for production (output in `frontend/dist`) |
 | `make test` | Run backend tests |
 | `make clean` | Remove all `node_modules` and `frontend/dist` |
-| `make setup-env` | Copy `backend/.env.example` to `backend/.env` if it doesn't exist |
+| `make setup-env` | Create `backend/.env` and `frontend/.env` from their `.env.example` files (if missing) |
+| `make setup-env-backend` | Create `backend/.env` from `backend/.env.example` (if missing) |
+| `make setup-env-frontend` | Create `frontend/.env` from `frontend/.env.example` (if missing) |
 | `make run-hardware` | Start hardware mock on port 3000 |
 | `make run-backend` | Start backend API on port 5001 |
 | `make run-frontend` | Start frontend dev server (e.g. port 5173) |
+| `make run-all` | Run hardware + backend + frontend in one terminal |
 
 **Quick start with Make:**
 
 ```bash
 make install          # Install everything
-make setup-env        # Create backend/.env from .env.example (then edit with your DATABASE_URL)
+make setup-env        # Create backend/.env + frontend/.env from their .env.example files (then edit values)
+
+# Option A: run everything in one terminal
+make run-all
+
+# Option B: run each service in a separate terminal
 make run-hardware    # Terminal 1: hardware mock
 make run-backend     # Terminal 2: backend
 make run-frontend    # Terminal 3: frontend
@@ -138,58 +194,122 @@ The backend requires a PostgreSQL database connection. We use Supabase for this:
 #### Required tables and columns
 
 - **`stations`** – umbrella station information and availability  
-  | Column           | Type                | Notes                                      |
-  |------------------|---------------------|--------------------------------------------|
-  | `station_id`     | `text` (PK)         | Unique station identifier                  |
-  | `latitude`       | `double precision`  | Station latitude                           |
-  | `longitude`      | `double precision`  | Station longitude                          |
-  | `capacity`       | `integer`           | Total umbrella capacity at the station     |
-  | `num_brellas`    | `integer`           | Current number of umbrellas at the station |
-  | `status`         | `text`              | e.g. `operational`                         |
+  | Column         | Type                | Notes                                                |
+  |----------------|---------------------|------------------------------------------------------|
+  | `station_id`   | `text` (PK)         | Unique station identifier                             |
+  | `station_name` | `text`              | Display name (e.g. "Suzzallo Library Station")        |
+  | `latitude`     | `double precision`  | Station latitude                                      |
+  | `longitude`    | `double precision`  | Station longitude                                     |
+  | `capacity`     | `integer`           | Total umbrella capacity at the station                |
+  | `num_brellas`  | `integer`           | Current number of umbrellas at the station           |
+  | `status`       | `text`              | e.g. `operational`                                    |
+  | `location_id`  | `uuid` (FK)         | Optional; links to `locations` for admin scope        |
 
 - **`rentals`** – rental history and active rentals  
-  | Column               | Type               | Notes                                             |
-  |----------------------|--------------------|---------------------------------------------------|
-  | `rental_id`          | `text` (PK)        | Unique rental ID                                  |
-  | `session_id`         | `text`             | Session identifier (`X-Session-Id` or fallback)   |
-  | `umbrella_id`        | `text`             | Logical umbrella identifier                       |
-  | `station_id`         | `text`             | Origin station ID                                 |
-  | `slot_number`        | `integer`          | Slot at origin station                            |
-  | `start_time`         | `timestamp`        | Rental start time                                 |
-  | `end_time`           | `timestamp`        | Rental end time (nullable until completed)       |
-  | `return_station_id`  | `text`             | Station where umbrella was returned (nullable)    |
-  | `return_slot_number` | `integer`          | Slot at return station (nullable)                 |
-  | `status`             | `text`             | e.g. `ACTIVE`, `COMPLETED`                        |
-  | `created_at`         | `timestamp`        | Optional created-at timestamp                     |
+  | Column               | Type        | Notes                                             |
+  |----------------------|-------------|---------------------------------------------------|
+  | `rental_id`          | `text` (PK) | Unique rental ID                                  |
+  | `session_id`         | `text`      | Session identifier (`X-Session-Id` or fallback)   |
+  | `umbrella_id`        | `text`      | Logical umbrella identifier                       |
+  | `station_id`         | `text`      | Origin station ID                                 |
+  | `start_time`         | `timestamp` | Rental start time                                 |
+  | `end_time`           | `timestamp` | Rental end time (nullable until completed)        |
+  | `return_station_id`  | `text`      | Station where umbrella was returned (nullable)    |
+  | `status`             | `text`      | e.g. `ACTIVE`, `COMPLETED`                         |
+  | `created_at`         | `timestamp` | Optional created-at timestamp                     |
 
 - **`umbrellas`** – umbrella inventory (basic schema, not heavily used by the backend)  
   | Column        | Type   | Notes                         |
   |---------------|--------|-------------------------------|
   | `umbrella_id` | `text` | Primary key / umbrella ID     |
-  | `station_id`  | `text` | Current station (nullable)    |
+  | `station_id`  | `text` | Current station (nullable)     |
   | `status`      | `text` | e.g. `available`, `missing`   |
 
-- **`user`** – app users (optional for core rental flow, but useful for demos)  
-  | Column          | Type   | Notes                       |
-  |-----------------|--------|-----------------------------|
-  | `user_id`       | `uuid` | Primary key                 |
-  | `name`          | `text` | User display name           |
-  | `email`         | `text` | User email                  |
-  | `account_status`| `text` | e.g. `active`, `disabled`   |
+- **`user`** – app users (optional for core rental flow; profile data is in **`profiles`**)  
+  | Column           | Type   | Notes                       |
+  |------------------|--------|-----------------------------|
+  | `user_id`        | `uuid` | Primary key                 |
+  | `name`           | `text` | User display name           |
+  | `email`          | `text` | User email                  |
+  | `account_status` | `text` | e.g. `active`, `disabled`   |
 
-For **admin and location-scoped admins**, you also need **`profiles`** (with `role`, and optionally `location_id`, `is_super_admin`) and optionally a **`locations`** table. Run [supabase-admin-locations.sql](docs/supabase-admin-locations.sql) as described in [Admin setup](docs/admin-setup.md).
+- **`profiles`** – Supabase Auth–linked user profiles (login, profile page, admin role)  
+  | Column          | Type    | Notes                                                    |
+  |-----------------|---------|----------------------------------------------------------|
+  | `id`            | `uuid` (PK, FK auth.users) | Same as auth user id                    |
+  | `email`         | `text`  | User email                                               |
+  | `full_name`     | `text`  | Display name                                             |
+  | `bio`           | `text`  | Optional bio                                             |
+  | `avatar_url`    | `text`  | Optional avatar URL                                      |
+  | `role`          | `text`  | `user` or `admin` (default `user`)                        |
+  | `location_id`   | `uuid` (FK) | Optional; for location-scoped admins                  |
+  | `is_super_admin`| `boolean` | Optional; if true, admin sees all locations/stations  |
 
-You can create these tables using the Supabase Table editor UI, or by running equivalent `CREATE TABLE` statements in the SQL editor. Rentals do **not** need seed data; they are created automatically when you use the app. For a working demo, create at least a few `stations` rows (matching the example IDs used by the hardware mock such as `station-001`, `station-002`, etc.).
+- **`locations`** – locations for location-scoped admins (e.g. "UW Seattle", "Downtown")  
+  | Column      | Type        | Notes                    |
+  |-------------|-------------|--------------------------|
+  | `id`        | `uuid` (PK) | Unique location id       |
+  | `name`      | `text`      | Location display name    |
+  | `created_at`| `timestamptz` | Optional timestamp    |
+
+- **`admin_location_assignments`** – links admins (profiles) to locations they manage  
+  | Column       | Type          | Notes                    |
+  |--------------|---------------|--------------------------|
+  | `id`         | `uuid` (PK)   | Unique row id            |
+  | `profile_id` | `uuid` (FK)   | References `profiles.id` |
+  | `location_id`| `uuid` (FK)   | References `locations.id`|
+  | `created_at` | `timestamptz` | Optional timestamp      |
+
+- **`app_content`** – admin-managed copy (Terms, Privacy, FAQ, announcements, support text)  
+  | Column       | Type         | Notes                          |
+  |--------------|--------------|--------------------------------|
+  | `content_key`| `text` (PK)  | e.g. `terms_and_conditions`, `help_faq` |
+  | `document`   | `jsonb`      | Structured content             |
+  | `updated_at` | `timestamptz`| Last update time               |
+  | `updated_by` | `uuid` (FK)  | Optional; admin who last edited |
+
+- **`config`** – key/value app configuration (e.g. pricing)  
+  | Column  | Type   | Notes              |
+  |---------|--------|--------------------|
+  | `key`   | `text` (PK) | e.g. `unlockFeeCents`, `centsPerMinute` |
+  | `value` | `text` | Stored value       |
+
+- **`support_requests`** – user-submitted help/support complaints (admin alerts)  
+  | Column       | Type          | Notes                          |
+  |--------------|---------------|--------------------------------|
+  | `id`         | `uuid` (PK)   | Unique request id              |
+  | `user_id`    | `uuid` (FK)   | References auth user           |
+  | `user_email` | `text`        | User email at submit time      |
+  | `session_id` | `text`        | Optional session id            |
+  | `reason`     | `text`        | e.g. `station_empty`, `app_issue` |
+  | `details`    | `text`        | User-provided details          |
+  | `severity`   | `text`        | e.g. `critical`, `non_critical` |
+  | `status`     | `text`        | `open` or `resolved`           |
+  | `created_at` | `timestamptz` | When submitted                 |
+  | `resolved_at`| `timestamptz` | When resolved (nullable)       |
+  | `resolved_by`| `uuid` (FK)   | Admin who resolved (nullable)  |
+
+For **admin and location-scoped admins**, create **`profiles`** and **`locations`** (and optionally **`admin_location_assignments`**), then run [supabase-admin-locations.sql](docs/supabase-admin-locations.sql) to add `location_id` and `is_super_admin` to `profiles` and `location_id` to `stations`. See [Admin setup](docs/admin-setup.md). For **app content**, **config**, and **support requests**, run the SQL in `docs/`: [supabase-create-app-content-table.sql](docs/supabase-create-app-content-table.sql), [supabase-create-config-table.sql](docs/supabase-create-config-table.sql), [supabase-create-support-requests-table.sql](docs/supabase-create-support-requests-table.sql).
+
+You can create these tables using the Supabase Table editor UI, or by running the equivalent SQL in the `docs/` folder. Rentals do **not** need seed data; they are created automatically when you use the app. For a working demo, create at least a few `stations` rows (matching the example IDs used by the hardware mock such as `station-001`, `station-002`, etc.).
 
 #### Example Supabase table views
 
 These screenshots show what the demo tables look like in Supabase:
 
+![Supabase admin_location_assignments table](docs/images/supabase-admin-location-assignments.png)
+
+![Supabase app_content table](docs/images/supabase-app-content.png)
+
+![Supabase config table](docs/images/supabase-config.png)
+
+![Supabase profiles table](docs/images/supabase-profiles.png)
+
 ![Supabase rentals table](docs/images/supabase-rentals.png)
 
 ![Supabase stations table](docs/images/supabase-stations.png)
 
-![Supabase user table](docs/images/supabase-user.png)
+![Supabase support_requests table](docs/images/supabase-support-requests.png)
 
 ### 3. Environment Configuration
 
@@ -525,6 +645,14 @@ The system requires three services to run simultaneously:
 2. **Backend API** (Express) - Port 5001
 3. **Frontend** (Vite dev server) - Port 5173 (default)
 
+### One-command option (recommended)
+
+From the project root, you can run the full stack (hardware + backend + frontend) in one terminal:
+
+```bash
+make run-all
+```
+
 ### Step-by-Step: Running All Services
 
 #### Terminal 1: Start Hardware Simulation
@@ -538,7 +666,7 @@ The hardware mock will start on `http://localhost:3000`. Keep this terminal open
 
 **Verify it's running:**
 ```bash
-curl http://localhost:3000/hardware/stations
+./test-mock.sh
 ```
 
 #### Terminal 2: Start Backend Server
@@ -630,8 +758,8 @@ Before creating a release:
 | GET | `/health` | Health check endpoint |
 | GET | `/api/stations` | List all umbrella stations |
 | GET | `/api/history` | List completed rental history for the session. Query: `?limit=&offset=`. Header: `X-Session-Id`. |
-| POST | `/api/rent` | Start a rental. Body: `{ stationId, slotNumber }` |
-| POST | `/api/return` | End a rental. Body: `{ rentalId, stationId, slotNumber, umbrellaId }` |
+| POST | `/api/rent` | Start a rental. Body: `{ stationId }` |
+| POST | `/api/return` | End a rental. Body: `{ rentalId, stationId, umbrellaId }` |
 
 **Session Management:** Use `X-Session-Id` header or include `sessionId` in the request body. Defaults to `guest` if not provided. Rent, return, and history all use the same session so completed rentals appear on the History page when using the same browser tab.
 
@@ -641,7 +769,6 @@ Before creating a release:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/hardware/stations` | List all stations with availability |
 | POST | `/hardware/unlock` | Unlock an umbrella (start rental) |
 | POST | `/hardware/return` | Return an umbrella (end rental) |
 
@@ -678,7 +805,3 @@ The frontend uses Vite environment variables. Create `frontend/.env` as describe
 * Abel Mitiku
 * Biniyam Gebreyohannes
 * Daniel Alemayehu
-
-
-## Gamma Release
-* gamma_release

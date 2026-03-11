@@ -1,6 +1,6 @@
 /**
  * POST /api/rent — Start a rental (unlock umbrella).
- * Body: { stationId [, sessionId ] }
+ * Body: { stationId, slotNumber [, sessionId ] }
  */
 
 const express = require("express");
@@ -17,7 +17,15 @@ router.post(
   async (req, res, next) => {
     try {
       const sid = sessionId(req);
-      const { stationId } = req.body;
+      const { stationId, slotNumber } = req.body;
+
+      // Validate slotNumber if provided
+      if (slotNumber !== undefined && slotNumber !== null) {
+        const slotNum = Number(slotNumber);
+        if (isNaN(slotNum) || !Number.isInteger(slotNum) || slotNum < 1) {
+          return res.status(400).json({ error: "Invalid slotNumber: must be a positive integer" });
+        }
+      }
 
       const stationIdStr = String(stationId).trim();
 

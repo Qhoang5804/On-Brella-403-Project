@@ -1,7 +1,8 @@
 /**
  * Rental and session state. Open/closed: add new state/actions without breaking existing consumers.
  */
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { getStationDetails, getStationDisplayName } from "../utils/stationNames";
 import * as api from "../api/client";
 import { config } from "../config";
 
@@ -66,11 +67,18 @@ export function RentalProvider({ children }) {
   const endRental = useCallback(
     async (stationId) => {
       if (!activeRental) throw new Error("No active rental");
+
       const result = await api.endRental(
         activeRental.rentalId,
         stationId,
         activeRental.umbrellaId
       );
+
+      const [pickUpStation, returnStation] = await Promise.all([
+        getStationDetails(activeRental.stationId).catch(() => null),
+        getStationDetails(stationId).catch(() => null),
+      ]);
+
       const summary = {
         rentalId: activeRental.rentalId,
         endTime: result.endTime,
@@ -78,11 +86,17 @@ export function RentalProvider({ children }) {
         costCents: result.costCents,
         pickUpStationId: activeRental.stationId,
         returnStationId: stationId,
+        pickUpStationName:
+          pickUpStation?.name || getStationDisplayName(activeRental.stationId),
+        returnStationName:
+          returnStation?.name || getStationDisplayName(stationId),
       };
+
       setActiveRental(null);
       setLastReturnSummary(summary);
       saveRental(null);
       saveLastReturn(summary);
+
       return { ...result, summary };
     },
     [activeRental]

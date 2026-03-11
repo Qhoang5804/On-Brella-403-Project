@@ -300,9 +300,9 @@ npm install --prefix hardwareSimulation
 
 ## Test Instructions
 
-You can use **`make test`** from the project root.
+You can use **`make test`** from the project root for backend tests.
 
-### Run All Tests
+### Run Root Test Commands
 
 From the project root:
 
@@ -310,7 +310,15 @@ From the project root:
 npm test
 ```
 
-This runs the backend test suite.
+This runs the **backend** test suite.
+
+You can also run:
+
+```bash
+npm run test:coverage
+```
+
+This runs backend tests with coverage.
 
 ### Run Tests by Component
 
@@ -327,67 +335,9 @@ Or from root:
 npm run test:backend
 ```
 
-**Test Coverage:**
-- `config.jest.test.js` - Configuration environment variables
-- `rentalService.jest.test.js` - Business logic (mocked hardware, mocked store)
-- `hardwareClient.jest.test.js` - Hardware API client (mocked fetch)
-- `middleware.jest.test.js` - Validation and error handling
-- `api.jest.test.js` - Full API integration tests (mocked hardware and store)
-
-### Code Coverage
-
-We use **Jest's built-in coverage** tooling for the backend and hardware simulation, and **Vitest coverage** for the frontend.
-
-- **Run backend tests with coverage locally:**
-
-  ```bash
-  cd backend
-  npm run test:coverage
-  # Then open backend/coverage/lcov-report/index.html in a browser to inspect coverage
-  ```
-
-- **Run hardware simulation tests with coverage locally:**
-
-  ```bash
-  cd hardwareSimulation
-  npm run test:coverage
-  # Then open hardwareSimulation/coverage/lcov-report/index.html in a browser to inspect coverage
-  ```
-
-- **From the project root:**
-
-  ```bash
-  # Backend coverage
-  npm run test:coverage
-
-  # Hardware simulation coverage
-  npm run test:hardware:coverage
-  ```
-
-- **Run frontend tests with coverage locally:**
-
-  ```bash
-  cd frontend
-  npm run test:coverage
-  # Then open frontend/coverage/lcov-report/index.html in a browser to inspect coverage
-  ```
-
-- **In CI (GitHub Actions):**
-  - The `CI` workflow runs `npm run test:coverage` (backend) and `npm run test:hardware:coverage` (hardware simulation) on every push and pull request to `main`.
-  - The generated coverage reports are uploaded as GitHub Actions artifacts:
-    - `backend-coverage` → contents of `backend/coverage/`
-    - `hardware-coverage` → contents of `hardwareSimulation/coverage/`
-
 #### Hardware Simulation Tests
 
-**Important:** The hardware mock must be running before tests.
-
 ```bash
-# Terminal 1: Start the hardware mock
-cd hardwareSimulation
-npm start
-
-# Terminal 2: Run tests
 cd hardwareSimulation
 npm test
 ```
@@ -405,17 +355,59 @@ cd frontend
 npm test
 ```
 
-**Note:** Frontend tests are currently minimal (placeholder).
+### Code Coverage
+
+We use **Jest** coverage for the backend and hardware simulation, and **Vitest** coverage for the frontend.
+
+#### Backend Coverage
+
+```bash
+cd backend
+npm run test:coverage
+```
+
+Or from root:
+
+```bash
+npm run test:coverage
+```
+
+#### Hardware Simulation Coverage
+
+```bash
+cd hardwareSimulation
+npm run test:coverage
+```
+
+Or from root:
+
+```bash
+npm run test:hardware:coverage
+```
+
+#### Frontend Coverage
+
+```bash
+cd frontend
+npm run test:coverage
+```
+
+### CI Coverage
+
+In GitHub Actions, the CI workflow runs backend and hardware coverage on pushes and pull requests to `main`.
+
+Artifacts:
+- `backend-coverage` → `backend/coverage/`
+- `hardware-coverage` → `hardwareSimulation/coverage/`
 
 ### How to Add New Tests
 
-- **Test harness:** Frontend, Backend and hardware simulation use **Jest**.
-- **Naming convention:** Name test files with the pattern `*.jest.test.js` (e.g. `myFeature.jest.test.js`). Jest is configured to match this pattern in `backend/jest.config.js` and `hardwareSimulation/jest.config.js`.
+- **Test harness:** Backend and hardware simulation use **Jest**. Frontend uses **Vitest**.
+- **Naming convention:** Backend and hardware simulation test files should follow the Jest pattern configured in their respective `jest.config.js` files.
 - **Where to add tests:**
   - Backend: add new test files in `backend/tests/`.
   - Hardware simulation: add new test files in `hardwareSimulation/tests/`.
-  - Frontend: add tests in `frontend/tests/` (or as needed by your frontend test setup).
-- **Running your new tests:** From the component directory run `npm test`, or from the project root use `npm run test:backend` or `npm run test:hardware`. For hardware tests, ensure the hardware mock is running first (see Hardware Simulation Tests above).
+  - Frontend: add tests in `frontend/tests/` or alongside frontend source files, depending on your Vitest setup.
 
 ### Running the Complete System
 

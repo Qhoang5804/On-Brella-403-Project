@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { QrScanner } from "../components/QrScanner";
 import { useRental } from "../context/RentalContext";
 import { getAllStations } from "../utils/stationNames";
+import { createCheckoutSession } from "../api/client";
 
 const boxSize = 260;
 const cornerSize = 48;
@@ -56,6 +57,9 @@ export function ScanPage2({ error: propError = null }) {
 
   const handleScan = useCallback(
     async (text) => {
+      console.log("scanned text:", text);
+
+
       if (!text || status === "loading") return;
       const payload = parseQrPayload(text);
       if (!payload) {
@@ -74,7 +78,8 @@ export function ScanPage2({ error: propError = null }) {
           const stationId = payload.stationId || activeRental.stationId;
           const slotNumber = payload.slotNumber ?? 0;
           await endRental(stationId, slotNumber);
-          navigate("/thank-you", { replace: true });
+          const payment = await createCheckoutSession(activeRental.rentalId);
+          window.location.href = payment.checkoutUrl;
         } catch (e) {
           setError(e?.message || "Failed to return umbrella");
           setStatus("idle");

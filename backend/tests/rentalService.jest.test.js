@@ -49,6 +49,47 @@ describe("rentalService.getStations", () => {
     expect(result.stations).toHaveLength(1);
     expect(result.stations[0].stationId).toBe("station-001");
   });
+
+  test("returns stations from DB when available", async () => {
+    // Mock DB available
+    const mockGetPool = jest.fn(() => ({}));
+    jest.doMock("../src/db", () => ({ getPool: mockGetPool }));
+    const mockListStations = jest.fn().mockResolvedValue([
+      { station_id: "db-station", capacity: 10, num_brellas: 5, latitude: 45, longitude: -122, name: "DB Station", status: "operational" }
+    ]);
+    jest.doMock("../src/db/stations", () => ({ listStations: mockListStations }));
+
+    // Re-require to use new mocks
+    jest.resetModules();
+    const rentalServiceWithDb = require("../src/services/rentalService");
+
+    const result = await rentalServiceWithDb.getStations();
+    expect(mockListStations).toHaveBeenCalled();
+    expect(result.stations).toHaveLength(1);
+    expect(result.stations[0].stationId).toBe("db-station");
+    expect(result.stations[0].capacity).toBe(10);
+  });
+
+  test("falls back to hardware when DB has no stations", async () => {
+    const mockGetPool = jest.fn(() => ({}));
+    jest.doMock("../src/db", () => ({ getPool: mockGetPool }));
+    const mockListStations = jest.fn().mockResolvedValue([]);
+    jest.doMock("../src/db/stations", () => ({ listStations: mockListStations }));
+
+    jest.resetModules();
+    const rentalServiceWithDb = require("../src/services/rentalService");
+
+    const result = await rentalServiceWithDb.getStations();
+    expect(mockListStations).toHaveBeenCalled();
+    expect(mockGetStations).toHaveBeenCalled();
+  });
+
+  test("returns empty when hardware fails", async () => {
+    mockGetStations.mockRejectedValue(new Error("Hardware error"));
+    const result = await rentalService.getStations();
+    expect(result.stations).toHaveLength(0);
+    expect(result.totalStations).toBe(0);
+  });
 });
 
 describe("rentalService.startRental", () => {

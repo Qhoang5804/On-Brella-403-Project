@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import * as api from "../api/client";
+import { supabase } from "@/lib/supabase/client";
 import { config } from "../config";
 import { useHomeAnnouncement } from "../hooks/useHomeAnnouncement";
 import { getAnnouncementSessionState, markAnnouncementSeen } from "../utils/announcementSession";
@@ -46,7 +47,9 @@ export function MapPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getStations();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      const data = await api.getStations(accessToken ? { accessToken } : {});
       setStations(data.stations || []);
     } catch (e) {
       setError(e.message || "Failed to load stations");
@@ -58,6 +61,16 @@ export function MapPage() {
 
   useEffect(() => {
     loadStations();
+  }, [loadStations]);
+
+  // Refetch stations when auth changes (e.g. after login) so location-scoped admins see their stations
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      loadStations();
+    });
+    return () => subscription?.unsubscribe();
   }, [loadStations]);
 
   useEffect(() => {

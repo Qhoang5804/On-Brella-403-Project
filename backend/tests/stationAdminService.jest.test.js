@@ -50,6 +50,7 @@ describe("stationAdminService", () => {
         latitude: 47.6062,
         longitude: -122.3321,
         status: "operational",
+        locationId: null,
       });
       expect(hardwareClient.registerStation).toHaveBeenCalledWith({
         stationId: "station-1",

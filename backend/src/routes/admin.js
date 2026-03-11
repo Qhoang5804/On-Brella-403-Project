@@ -50,11 +50,29 @@ async function listAdminReports() {
 }
 
 /**
+ * GET /api/admin/me — Current admin context: isSuperAdmin, locationId, locationName (for location-scoped admins).
+ */
+router.get("/me", async (req, res) => {
+  const isSuperAdmin = !!req.isSuperAdmin;
+  const locationId = req.adminLocationId ?? null;
+  let locationName = null;
+  if (locationId) {
+    try {
+      const { rows } = await db.query("SELECT name FROM locations WHERE id = $1 LIMIT 1", [locationId]);
+      locationName = rows[0]?.name ?? null;
+    } catch {
+      // locations table may not exist
+    }
+  }
+  res.json({ isSuperAdmin, locationId, locationName });
+});
+
+/**
  * GET /api/admin/stats — Dashboard counts: users, reports (total + open), active sessions, totalUmbrellas.
- * Active sessions = all unavailable umbrellas (total capacity − total available) from stations table.
+ * For location-scoped admins, station-based stats (totalUmbrellas, activeSessions) are limited to their location.
  * Returns safe defaults on DB errors so the dashboard always loads (no 500).
  */
-router.get("/stats", async (_req, res) => {
+router.get("/stats", async (req, res) => {
   let usersCount = 0;
   let activeRentalsCount = 0;
   let totalUmbrellas = null;
@@ -84,13 +102,42 @@ router.get("/stats", async (_req, res) => {
       // no db or store not available
     }
     try {
-      // Total capacity and available from stations; active sessions = unavailable = capacity − available
-      const { rows: sumRows } = await db.query(
-        `SELECT
-          COALESCE(SUM(capacity), 0)::int AS total_capacity,
-          COALESCE(SUM(num_brellas), 0)::int AS total_available
-         FROM stations`
-      );
+      const locationIds = req.isSuperAdmin ? null : req.adminLocationIds ?? null;
+      const locationId = req.isSuperAdmin ? null : req.adminLocationId ?? null;
+      let sumRows;
+      if (locationIds?.length > 0) {
+        try {
+          const result = await db.query(
+            `SELECT COALESCE(SUM(capacity), 0)::int AS total_capacity,
+                    COALESCE(SUM(num_brellas), 0)::int AS total_available
+             FROM stations WHERE location_id = ANY($1)`,
+            [locationIds]
+          );
+          sumRows = result.rows;
+        } catch {
+          sumRows = null;
+        }
+      } else if (locationId) {
+        try {
+          const result = await db.query(
+            `SELECT COALESCE(SUM(capacity), 0)::int AS total_capacity,
+                    COALESCE(SUM(num_brellas), 0)::int AS total_available
+             FROM stations WHERE location_id = $1`,
+            [locationId]
+          );
+          sumRows = result.rows;
+        } catch {
+          sumRows = null;
+        }
+      }
+      if (!sumRows && !locationIds?.length && !locationId) {
+        const result = await db.query(
+          `SELECT COALESCE(SUM(capacity), 0)::int AS total_capacity,
+                  COALESCE(SUM(num_brellas), 0)::int AS total_available
+           FROM stations`
+        );
+        sumRows = result.rows;
+      }
       const row = sumRows[0];
       totalCapacity = row?.total_capacity ?? 0;
       totalUmbrellas = row?.total_available ?? 0;
@@ -100,6 +147,9 @@ router.get("/stats", async (_req, res) => {
     }
   }
 
+  // Debug header: true when stats are limited to this admin's assigned location(s)
+  const isLocationScoped = !req.isSuperAdmin && (req.adminLocationIds?.length > 0 || req.adminLocationId);
+  res.setHeader("X-Admin-Location-Scoped", isLocationScoped ? "true" : "false");
   res.json({
     usersCount,
     reportsCount: reports.length,
@@ -108,6 +158,7 @@ router.get("/stats", async (_req, res) => {
     activeRentalsCount,
     activeSessions,
     totalUmbrellas,
+    totalCapacity,
   });
 });
 
@@ -255,12 +306,16 @@ router.post("/reports/:id/resolve", async (req, res, next) => {
 });
 
 /**
- * GET /api/admin/stations — List all stations from the database (no hardware dependency).
+ * GET /api/admin/stations — List stations from the database. Location-scoped admins see only their location's stations.
  */
-router.get("/stations", async (_req, res) => {
+router.get("/stations", async (req, res) => {
   try {
     const stationsDb = require("../db/stations");
-    const rows = await stationsDb.listStations();
+    const locationIds = req.isSuperAdmin ? null : (req.adminLocationIds?.length > 0 ? req.adminLocationIds : null);
+    const locationId = req.isSuperAdmin ? null : req.adminLocationId || null;
+    const rows = await stationsDb.listStations(
+      locationIds ? { locationIds } : locationId ? { locationId } : {}
+    );
     const stations = rows.map((r) => ({
       stationId: String(r.station_id ?? ""),
       name: r.name || null,
@@ -288,7 +343,12 @@ router.post(
   requireFields("stationId", "capacity"),
   async (req, res, next) => {
     try {
-      const row = await stationAdminService.createOrUpdateStation(req.body);
+      const scope = {
+        adminLocationId: req.adminLocationId ?? null,
+        adminLocationIds: req.adminLocationIds ?? [],
+        isSuperAdmin: !!req.isSuperAdmin,
+      };
+      const row = await stationAdminService.createOrUpdateStation(req.body, scope);
       if (!row) {
         return res.status(503).json({ error: "Database not configured" });
       }
@@ -332,7 +392,12 @@ router.patch(
   async (req, res, next) => {
     try {
       const { stationId } = req.params;
-      const row = await stationAdminService.updateStationStatus(stationId, req.body.status);
+      const scope = {
+        adminLocationId: req.adminLocationId ?? null,
+        adminLocationIds: req.adminLocationIds ?? [],
+        isSuperAdmin: !!req.isSuperAdmin,
+      };
+      const row = await stationAdminService.updateStationStatus(stationId, req.body.status, scope);
       res.json({
         station: {
           stationId: row.station_id,
@@ -370,7 +435,12 @@ router.put(
   async (req, res, next) => {
     try {
       const stationId = String(req.params.stationId ?? "").trim();
-      const row = await stationAdminService.updateStation(stationId, req.body);
+      const scope = {
+        adminLocationId: req.adminLocationId ?? null,
+        adminLocationIds: req.adminLocationIds ?? [],
+        isSuperAdmin: !!req.isSuperAdmin,
+      };
+      const row = await stationAdminService.updateStation(stationId, req.body, scope);
       res.json({
         station: {
           stationId: row.station_id,
@@ -410,7 +480,12 @@ router.put(
 router.delete("/stations/:stationId", async (req, res, next) => {
   try {
     const stationId = String(req.params.stationId ?? "").trim();
-    await stationAdminService.deleteStation(stationId);
+    const scope = {
+      adminLocationId: req.adminLocationId ?? null,
+      adminLocationIds: req.adminLocationIds ?? [],
+      isSuperAdmin: !!req.isSuperAdmin,
+    };
+    await stationAdminService.deleteStation(stationId, scope);
     res.status(204).send();
   } catch (err) {
     if (err.statusCode === 404) {

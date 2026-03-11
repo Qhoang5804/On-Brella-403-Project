@@ -252,7 +252,7 @@ export function StationMap({
         zoomControl={false}
         attributionControl={false}
         minZoom={3}
-        maxBounds={[[-90, -180], [90, 180]]}  // 👈 add this
+        maxBounds={[[-90, -180], [90, 180]]}
         maxBoundsViscosity={1.0}
       >
         <TileLayer attribution={tileConfig.attribution} url={tileConfig.url} />

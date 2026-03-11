@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import { config } from "../config";
@@ -45,6 +45,110 @@ function UserLocationMarker() {
   return <Marker position={position} icon={userIcon} />;
 }
 
+/**
+ * Draws a walking route polyline from the user's current GPS location to a
+ * destination station. Uses the OSRM foot-routing API hosted by OpenStreetMap DE
+ * to fetch a real pedestrian path (sidewalks, crossings, footpaths) rather than
+ * a straight line. Also places a pulsing blue dot at the user's position.
+ *
+ * Re-fetches whenever `to` changes; cleans up the old route on unmount or
+ * when a new destination is selected. A `cancelled` flag guards against
+ * stale async responses writing to an already-cleaned-up map layer.
+ *
+ * @param {{ to: [number, number] | null }} props
+ *   `to` – destination coordinates as [latitude, longitude], or null to clear.
+ */
+function RouteLine({ to }) {
+  const map = useMap();
+  const polylineRef = useRef(null);   // Leaflet polyline for the route
+  const userMarkerRef = useRef(null); // Leaflet marker for the user's location dot
+
+  useEffect(() => {
+    // Remove any previously drawn route and user marker before drawing a new one
+    if (polylineRef.current) {
+      map.removeLayer(polylineRef.current);
+      polylineRef.current = null;
+    }
+    if (userMarkerRef.current) {
+      map.removeLayer(userMarkerRef.current);
+      userMarkerRef.current = null;
+    }
+
+    if (!to) return;
+
+    // Guard against stale async callbacks after cleanup
+    let cancelled = false;
+
+    // Pulsing blue dot icon for the user's current position
+    const userIcon = L.divIcon({
+      className: "user-location-marker",
+      html: `
+        <div style="position:relative;width:48px;height:48px;display:flex;align-items:center;justify-content:center;">
+          <div class="pulse-ring" style="position:absolute;width:48px;height:48px;border-radius:50%;background:rgba(13,166,242,0.35);"></div>
+          <div style="width:16px;height:16px;border-radius:50%;background:#0da6f2;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);position:relative;z-index:2;"></div>
+        </div>
+      `,
+      iconSize: [48, 48],
+      iconAnchor: [24, 24],
+    });
+
+    // Step 1: Get the user's current GPS coordinates via the browser Geolocation API
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (cancelled) return;
+        const from = [pos.coords.latitude, pos.coords.longitude];
+
+        // Step 2: Place a blue dot at the user's location on the map
+        userMarkerRef.current = L.marker(from, { icon: userIcon, interactive: false }).addTo(map);
+
+        // Step 3: Fetch the walking route from OSRM (foot profile).
+        // OSRM expects coordinates as lng,lat; the response contains a GeoJSON
+        // geometry with an array of [lng, lat] coordinate pairs tracing the path.
+        const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
+        fetch(url)
+          .then((res) => res.json())
+          .then((data) => {
+            if (cancelled) return;
+            if (!data.routes?.[0]?.geometry?.coordinates) return;
+
+            // Step 4: Convert OSRM's [lng, lat] pairs to Leaflet's [lat, lng] format
+            const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+
+            // Step 5: Draw the route as a styled polyline on the map
+            const line = L.polyline(coords, {
+              color: "#0da6f2",
+              weight: 5,
+              opacity: 0.8,
+              lineCap: "round",
+            }).addTo(map);
+            polylineRef.current = line;
+
+            // Step 6: Auto-zoom the map to fit the entire route with padding
+            map.fitBounds(line.getBounds(), { padding: [60, 60] });
+          })
+          .catch(() => {});
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
+    );
+
+    // Cleanup: remove drawn layers and mark async work as stale
+    return () => {
+      cancelled = true;
+      if (polylineRef.current) {
+        map.removeLayer(polylineRef.current);
+        polylineRef.current = null;
+      }
+      if (userMarkerRef.current) {
+        map.removeLayer(userMarkerRef.current);
+        userMarkerRef.current = null;
+      }
+    };
+  }, [map, to?.[0], to?.[1]]); // Re-run when destination coordinates change
+
+  return null;
+}
+
 function CenterOnUser({ mapRef }) {
   const map = useMap();
   const goToUser = useCallback(() => {
@@ -71,6 +175,8 @@ export function StationMap({
   mapRef,
   /** When true: markers are simple dots only (no availability badge, no popup). For active-rental map background. */
   simplified = false,
+  /** [lat, lng] destination for route line (only used in active/simplified mode) */
+  routeTo = null,
 }) {
   const center = useMemo(
     () =>
@@ -117,7 +223,9 @@ export function StationMap({
         attributionControl={false}
       >
         <TileLayer attribution={tileConfig.attribution} url={tileConfig.url} />
-        {!simplified && <UserLocationMarker />}
+        {/* Show live user marker in active/simplified mode too; RouteLine draws its own user dot while routing. */}
+        {(!simplified || !routeTo) && <UserLocationMarker />}
+        {routeTo && <RouteLine to={routeTo} />}
         <CenterOnUser mapRef={mapRef} />
         {stations.map((station) => {
           const lat = station.location?.latitude;

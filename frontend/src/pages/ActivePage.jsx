@@ -17,6 +17,7 @@ export function ActivePage() {
   const [stations, setStations] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchExpanded, setSearchExpanded] = useState(false);
+  const [routeTo, setRouteTo] = useState(null);
 
   const hasValidRental = activeRental && typeof activeRental === "object" && activeRental.startTime;
 
@@ -54,8 +55,9 @@ export function ActivePage() {
   const handleStationClick = useCallback((station) => {
     const lat = station.location?.latitude;
     const lng = station.location?.longitude;
-    if (lat != null && lng != null && mapRef.current?.setView) {
-      mapRef.current.setView([lat, lng]);
+    if (lat != null && lng != null) {
+      mapRef.current?.setView?.([lat, lng]);
+      setRouteTo([lat, lng]);
     }
   }, []);
 
@@ -109,6 +111,7 @@ export function ActivePage() {
           mapRef={mapRef}
           simplified
           onSelectStation={handleStationClick}
+          routeTo={routeTo}
         />
       </div>
 
@@ -144,6 +147,16 @@ export function ActivePage() {
       </div>
       {/* Navigation arrow: same logic as Map page – bottom-right, above bottom sheet */}
       <div className="fixed right-4 bottom-[52vh] z-30 transition-[bottom] duration-300 ease-out">
+        {routeTo && (
+          <button
+            type="button"
+            onClick={() => setRouteTo(null)}
+            className="w-12 h-12 mb-3 bg-white dark:bg-slate-800 rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-transform border border-slate-100 dark:border-slate-700"
+            aria-label="Clear route"
+          >
+            <span className="material-icons text-red-500">close</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={goToMyLocation}

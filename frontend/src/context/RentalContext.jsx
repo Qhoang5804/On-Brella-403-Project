@@ -1,7 +1,7 @@
 /**
  * Rental and session state. Open/closed: add new state/actions without breaking existing consumers.
  */
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import * as api from "../api/client";
 import { config } from "../config";
 
@@ -9,7 +9,7 @@ const RentalContext = createContext(null);
 
 function loadStoredRental() {
   try {
-    const raw = sessionStorage.getItem(config.rentalStorageKey);
+    const raw = localStorage.getItem(config.rentalStorageKey);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -20,16 +20,16 @@ function loadStoredRental() {
 function saveRental(rental) {
   try {
     if (rental) {
-      sessionStorage.setItem(config.rentalStorageKey, JSON.stringify(rental));
+      localStorage.setItem(config.rentalStorageKey, JSON.stringify(rental));
     } else {
-      sessionStorage.removeItem(config.rentalStorageKey);
+      localStorage.removeItem(config.rentalStorageKey);
     }
   } catch (_) {}
 }
 
 function loadLastReturnSummary() {
   try {
-    const raw = sessionStorage.getItem(config.lastReturnStorageKey);
+    const raw = localStorage.getItem(config.lastReturnStorageKey);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -39,9 +39,9 @@ function loadLastReturnSummary() {
 function saveLastReturn(summary) {
   try {
     if (summary) {
-      sessionStorage.setItem(config.lastReturnStorageKey, JSON.stringify(summary));
+      localStorage.setItem(config.lastReturnStorageKey, JSON.stringify(summary));
     } else {
-      sessionStorage.removeItem(config.lastReturnStorageKey);
+      localStorage.removeItem(config.lastReturnStorageKey);
     }
   } catch (_) {}
 }
@@ -87,11 +87,6 @@ export function RentalProvider({ children }) {
     },
     [activeRental]
   );
-
-  useEffect(() => {
-    const stored = loadStoredRental();
-    setActiveRental(stored);
-  }, []);
 
   const clearRentalState = useCallback(() => {
     setActiveRental(null);

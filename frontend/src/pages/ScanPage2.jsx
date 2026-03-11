@@ -9,28 +9,24 @@ const boxSize = 260;
 const cornerSize = 48;
 const cornerWidth = 4;
 
-// Parse QR content to { stationId, slotNumber }. Supports JSON or "id:slot" / "id-slot".
+// Parse QR content to { stationId }.
+// Supports either plain text station ID or JSON with stationId/station_id.
 function parseQrPayload(text) {
   try {
     const trimmed = (text || "").trim();
+
+    if (!trimmed) return null;
+
     if (trimmed.startsWith("{")) {
       const obj = JSON.parse(trimmed);
       return {
-        stationId: obj.stationId || obj.station_id || "",
-        slotNumber:
-          typeof obj.slotNumber !== "undefined"
-            ? Number(obj.slotNumber)
-            : Number(obj.slot_number) || 0,
+        stationId: String(obj.stationId || obj.station_id || "").trim(),
       };
     }
-    const parts = trimmed.split(/[:\-]/);
-    if (parts.length >= 2) {
-      return {
-        stationId: (parts[0] || "").trim(),
-        slotNumber: parseInt(parts[1], 10) || 0,
-      };
-    }
-    return { stationId: trimmed, slotNumber: 0 };
+
+    return {
+      stationId: trimmed,
+    };
   } catch {
     return null;
   }
@@ -72,12 +68,24 @@ export function ScanPage2({ error: propError = null }) {
           setError("No active rental to return");
           return;
         }
+
+        const stationId = (payload.stationId || "").trim();
+
+        if (!stationId) {
+          setError("Invalid QR code: no station ID");
+          return;
+        }
+
+        if (validStationIds.size > 0 && !validStationIds.has(stationId)) {
+          setError("Return station not found. Use a QR code from an On-Brella station.");
+          return;
+        }
+
         setError(null);
         setStatus("loading");
+
         try {
-          const stationId = payload.stationId || activeRental.stationId;
-          const slotNumber = payload.slotNumber ?? 0;
-          await endRental(stationId, slotNumber);
+          await endRental(stationId);
           const payment = await createCheckoutSession(activeRental.rentalId);
           window.location.href = payment.checkoutUrl;
         } catch (e) {
@@ -101,7 +109,7 @@ export function ScanPage2({ error: propError = null }) {
       setError(null);
       setStatus("loading");
       try {
-        await startRental(stationId, payload.slotNumber ?? 0);
+        await startRental(stationId);
         navigate("/active", { replace: true });
       } catch (e) {
         setError(e?.message || "Could not start rental");

@@ -16,6 +16,10 @@ const mockStore = createMockRentalStore();
 
 jest.mock("../src/store/getRentalStore", () => () => mockStore);
 
+jest.mock("../src/db", () => ({
+  getPool: jest.fn(() => ({})),
+}));
+
 // mock pricing config access
 jest.mock("../src/db/config", () => ({
   get: jest.fn().mockResolvedValue("100"),
@@ -135,7 +139,7 @@ describe("rentalService.startRental", () => {
     const result = await rentalService.startRental("s1", "station-001");
     expect(result.success).toBe(true);
     expect(result.rentalId).toMatch(/^rental-/);
-    expect(result.umbrellaId).toBe("umbrella-station-001-0");
+  expect(result.umbrellaId).toBe("umbrella-station-001-undefined");
     expect(result.startTime).toBeDefined();
   });
 

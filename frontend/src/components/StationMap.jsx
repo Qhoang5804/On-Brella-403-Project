@@ -168,6 +168,36 @@ function CenterOnUser({ mapRef }) {
   return null;
 }
 
+/** When stations load or change, fit map bounds to show all stations (e.g. zoom to admin's managed stations). */
+function FitBoundsToStations({ stations = [] }) {
+  const map = useMap();
+  const lastFittedKey = useRef(null);
+  const points = useMemo(() => {
+    return stations
+      .map((s) => {
+        const lat = s.location?.latitude;
+        const lng = s.location?.longitude;
+        return lat != null && lng != null ? [lat, lng] : null;
+      })
+      .filter(Boolean);
+  }, [stations]);
+
+  useEffect(() => {
+    if (points.length === 0) return;
+    const key = `${points.length}-${points[0]?.[0]}-${points[0]?.[1]}-${points[points.length - 1]?.[0]}-${points[points.length - 1]?.[1]}`;
+    if (lastFittedKey.current === key) return;
+    lastFittedKey.current = key;
+    const bounds = L.latLngBounds(points);
+    if (points.length === 1) {
+      bounds.extend([points[0][0] + 0.005, points[0][1] + 0.005]);
+      bounds.extend([points[0][0] - 0.005, points[0][1] - 0.005]);
+    }
+    map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 });
+  }, [map, points]);
+
+  return null;
+}
+
 export function StationMap({
   stations = [],
   selectedStationId,
@@ -227,6 +257,7 @@ export function StationMap({
         {(!simplified || !routeTo) && <UserLocationMarker />}
         {routeTo && <RouteLine to={routeTo} />}
         <CenterOnUser mapRef={mapRef} />
+        {stations.length > 0 && <FitBoundsToStations stations={stations} />}
         {stations.map((station) => {
           const lat = station.location?.latitude;
           const lng = station.location?.longitude;

@@ -1,6 +1,6 @@
 /**
  * POST /api/return — End a rental (return umbrella).
- * Body: { rentalId, stationId, umbrellaId [, slotNumber, sessionId ] }
+ * Body: { rentalId, stationId, umbrellaId [, sessionId ] }
  */
 
 const express = require("express");
@@ -17,15 +17,7 @@ router.post(
   async (req, res, next) => {
     try {
       const sid = sessionId(req);
-      const { rentalId, stationId, umbrellaId, slotNumber } = req.body;
-
-      // Validate slotNumber if provided
-      if (slotNumber !== undefined && slotNumber !== null) {
-        const slotNum = Number(slotNumber);
-        if (isNaN(slotNum) || !Number.isInteger(slotNum)) {
-          return res.status(400).json({ error: "Invalid slotNumber: must be an integer" });
-        }
-      }
+      const { rentalId, stationId, umbrellaId } = req.body;
 
       const stationIdStr = String(stationId).trim();
       const rentalIdStr = String(rentalId).trim();

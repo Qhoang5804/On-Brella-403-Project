@@ -30,14 +30,6 @@ describe("return router", () => {
     expect(res.body).toEqual(fake);
   });
 
-  test("invalid slotNumber returns 400", async () => {
-    const res = await request(app)
-      .post("/")
-      .send({ rentalId: "r1", stationId: "s1", slotNumber: "nope", umbrellaId: "u1" });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toContain("slotNumber");
-  });
-
   test("errors are forwarded", async () => {
     const err = new Error("boom");
     rentalService.endRental.mockRejectedValue(err);

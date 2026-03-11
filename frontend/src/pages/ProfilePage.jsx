@@ -130,7 +130,7 @@ export function ProfilePage() {
             {isLoggingOut ? "Logging out…" : "Log Out"}
           </button>
 
-          <p className="text-center text-xs text-slate-400 dark:text-slate-600 pt-2 sm:pt-4 font-medium">Version 2.4.0 (Build 882)</p>
+          <p className="text-center text-xs text-slate-400 dark:text-slate-600 pt-2 sm:pt-4 font-medium">On-Brella - We've got you covered!</p>
         </div>
       </main>
     </div>

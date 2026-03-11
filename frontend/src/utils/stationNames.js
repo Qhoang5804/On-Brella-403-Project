@@ -10,14 +10,14 @@ let stationCachePromise = null;
 
 /** Fallback hard-coded names for offline/error scenarios */
 const fallbackNames = {
-  "station-001": "Suzzallo Library Station",
-  "station-002": "The HUB",
-  "station-003": "Kane Hall Station",
-  "station-004": "North Campus Station",
-  "station-005": "Red Square Station",
-  "fuzzball_01": "Suzzallo Library Station",
-  "station-hub": "The HUB",
-  "fuzzball_02": "The HUB South",
+  //  "station-001": "Suzzallo Library Station",
+  //  "station-002": "The HUB",
+  //  "station-003": "Kane Hall Station",
+  //  "station-004": "North Campus Station",
+  //  "station-005": "Red Square Station",
+  //  "fuzzball_01": "Suzzallo Library Station",
+  //  "station-hub": "The HUB",
+  //  "fuzzball_02": "The HUB South",
 };
 
 const fallbackAddresses = {
@@ -80,7 +80,7 @@ export function getStationDisplayName(stationId) {
   }
 
   // Fall back to hard-coded names
-  return fallbackNames[stationId] || stationId;
+  return fallbackNames[stationId] || `Station ${stationId}`;
 }
 
 /**

@@ -22,8 +22,14 @@ export function ThankYouPage() {
 
   const durationFormatted = formatDurationMs(lastReturnSummary.durationMs);
   const costCents = lastReturnSummary.costCents;
-  const pickUpName = getStationDisplayName(lastReturnSummary.pickUpStationId);
-  const returnName = getStationDisplayName(lastReturnSummary.returnStationId);
+
+  const pickUpName =
+    lastReturnSummary.pickUpStationName ||
+    getStationDisplayName(lastReturnSummary.pickUpStationId);
+
+  const returnName =
+    lastReturnSummary.returnStationName ||
+    getStationDisplayName(lastReturnSummary.returnStationId);
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col">

@@ -201,12 +201,21 @@ Edit `backend/.env` and set at least the following variables:
 
 ```env
 DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-1-[region].pooler.supabase.com:6543/postgres
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 PORT=5001
 HARDWARE_URL=http://localhost:3000
+ADMIN_EMAIL=admin@onbrella.com
+STRIPE_SECRET_KEY=sk_test_your_test_key_here
 ```
 
-- **`DATABASE_URL` connection string type:** In Supabase, go to **Project Settings → Database → Connection string (URI)** and copy the **Postgres connection string using the connection pooler in Transaction mode** (it should start with `postgres://` or `postgresql://`). Do **not** use the HTTP/REST API URL or the service role key here.
-- **Required:** The `DATABASE_URL` must be set correctly for the backend to start and for `/health` to report `"database": "connected"`.
+- **`DATABASE_URL`**: Supabase Postgres connection string using the connection pooler in Transaction mode.
+- **`SUPABASE_URL`**: Supabase project URL for backend auth/admin verification.
+- **`SUPABASE_SERVICE_ROLE_KEY`**: Supabase service role key for backend auth/admin verification. Do **not** expose this in frontend code.
+- **`PORT`**: Backend port. Defaults to `5001`.
+- **`HARDWARE_URL`**: Hardware mock base URL. Defaults to `http://localhost:3000`.
+- **`ADMIN_EMAIL`**: Optional backend admin email override. Defaults to `admin@onbrella.com`.
+- **`STRIPE_SECRET_KEY`**: Required for Stripe payment features. Keep this secret and server-side only.
 
 #### Frontend `.env`
 

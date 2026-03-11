@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase/client";
 import { config } from "../config";
 import { useHomeAnnouncement } from "../hooks/useHomeAnnouncement";
 import { getAnnouncementSessionState, markAnnouncementSeen } from "../utils/announcementSession";
-import { getStationDisplayName, getStationAddress } from "../utils/stationNames";
 import { StationMap } from "../components/StationMap";
 import { StationBottomSheet } from "../components/StationBottomSheet";
 
@@ -14,9 +13,6 @@ export function MapPage() {
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchExpanded, setSearchExpanded] = useState(false);
-  const searchInputRef = useRef(null);
   const [selectedStation, setSelectedStation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const mapRef = useRef(null);
@@ -94,21 +90,9 @@ export function MapPage() {
     return () => window.clearTimeout(timer);
   }, [announcement]);
 
-  useEffect(() => {
-    if (searchExpanded) searchInputRef.current?.focus();
-  }, [searchExpanded]);
-
-  const filtered = searchQuery.trim()
-    ? stations.filter(
-        (s) =>
-          (s.name || getStationDisplayName(s.stationId)).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (s.stationId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (getStationAddress(s.stationId) || "").toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : stations;
   const filteredStations = userLocation
-    ? [...filtered].sort((a, b) => distanceSq(a) - distanceSq(b))
-    : filtered;
+    ? [...stations].sort((a, b) => distanceSq(a) - distanceSq(b))
+    : stations;
 
   const goToScan = () => navigate("/scan", { state: { mode: "rent" } });
   const goToMyLocation = () => mapRef.current?.goToUser?.();
@@ -171,34 +155,6 @@ export function MapPage() {
       </div>
 
       <div className="absolute top-4 right-4 z-10">
-        <div
-          className={`bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center border border-slate-100 dark:border-slate-700 transition-all duration-300 origin-right overflow-hidden ${
-            searchExpanded ? "w-80 px-3 py-2" : "w-12 h-12 p-2"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => setSearchExpanded((s) => !s)}
-            className="flex items-center justify-center w-8 h-8 rounded-md"
-            aria-label="Open search"
-          >
-            <span className="material-icons text-primary">search</span>
-          </button>
-
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search by station name or address"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onBlur={() => {
-              if (!searchQuery) setSearchExpanded(false);
-            }}
-            className={`bg-transparent border-none focus:outline-none focus:ring-0 ml-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 ${
-              searchExpanded ? "block w-full" : "hidden"
-            }`}
-          />
-        </div>
         {error && (
           <p className="text-red-500 text-sm mt-2 bg-white/90 dark:bg-slate-800/90 px-3 py-2 rounded-lg">
             {error}

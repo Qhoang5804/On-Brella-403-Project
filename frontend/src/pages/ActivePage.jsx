@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRental } from "../context/RentalContext";
 import { formatDurationFromStart } from "../utils/duration";
-import { getStationDisplayName, getStationAddress } from "../utils/stationNames";
 import { StationMap } from "../components/StationMap";
 import * as api from "../api/client";
 
@@ -10,13 +9,10 @@ export function ActivePage() {
   const navigate = useNavigate();
   const { activeRental, endRental, lastReturnSummary } = useRental();
   const mapRef = useRef(null);
-  const searchInputRef = useRef(null);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState("00:00:00");
   const [stations, setStations] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchExpanded, setSearchExpanded] = useState(false);
   const [routeTo, setRouteTo] = useState(null);
 
   const hasValidRental = activeRental && typeof activeRental === "object" && activeRental.startTime;
@@ -61,18 +57,7 @@ export function ActivePage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (searchExpanded) searchInputRef.current?.focus();
-  }, [searchExpanded]);
-
-  const filteredStations = searchQuery.trim()
-    ? stations.filter(
-        (s) =>
-          getStationDisplayName(s.stationId).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (s.stationId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (getStationAddress(s.stationId) || "").toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : stations;
+  const filteredStations = stations;
 
   const goToMyLocation = () => {
     setError(null);
@@ -115,36 +100,6 @@ export function ActivePage() {
         />
       </div>
 
-      {/* Search and navigation (same as map page) */}
-      <div className="absolute top-4 right-4 z-20">
-        <div
-          className={`bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center border border-slate-100 dark:border-slate-700 transition-all duration-300 origin-right overflow-hidden ${
-            searchExpanded ? "w-80 px-3 py-2" : "w-12 h-12 p-2"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => setSearchExpanded((s) => !s)}
-            className="flex items-center justify-center w-8 h-8 rounded-md"
-            aria-label="Open search"
-          >
-            <span className="material-icons text-primary">search</span>
-          </button>
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="Search by station name or address"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onBlur={() => {
-              if (!searchQuery) setSearchExpanded(false);
-            }}
-            className={`bg-transparent border-none focus:outline-none focus:ring-0 ml-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 ${
-              searchExpanded ? "block w-full" : "hidden"
-            }`}
-          />
-        </div>
-      </div>
       {/* Navigation arrow: same logic as Map page – bottom-right, above bottom sheet */}
       <div className="fixed right-4 bottom-[52vh] z-30 transition-[bottom] duration-300 ease-out">
         {routeTo && (
